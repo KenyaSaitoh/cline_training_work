@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>TopPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h2 class="welcome-title">Welcome to Berry Books</h2>
+    <hr />
+    <div>登録済みのお客様</div>
+    <h:form styleClass="login">
+        <table>
+            <tr>
+                <td>メールアドレス</td>
+                <td><h:inputText id="email" value="#{loginBean.email}" 
+                                 validatorMessage="メールアドレスの検証に失敗しました">
+                    <f:validateBean />
+                </h:inputText></td>
+                <td>
+                    <h:message for="email" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>パスワード</td>
+                <td><h:inputSecret id="password" value="#{loginBean.password}" 
+                                   validatorMessage="パスワードの検証に失敗しました">
+                    <f:validateBean />
+                </h:inputSecret></td>
+                <td>
+                    <h:message for="password" styleClass="error" />
+                </td>
+            </tr>
+        </table>
+        <h:commandButton id="loginButton" value="ログイン" action="#{loginBean.processLogin}" />
+        <h:messages globalOnly="true" styleClass="error" />
+    </h:form>
+    <hr />
+    <div>新規のお客様</div>
+    <h:link id="newCustomerLink" value="お客様のご登録" outcome="customerInput" />
+</h:body>
+</html>
+

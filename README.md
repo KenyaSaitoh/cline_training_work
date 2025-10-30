@@ -13,7 +13,8 @@ Servlet/JSP、JSF、CDI、JAX-RSを段階的に学習できます。
 jee_micro_vsc/
 ├── projects/
 │   ├── java/                    # Jakarta EE (Java) プロジェクト
-│   │   ├── berry-books/         # JSF MVCオンライン書店
+│   │   ├── berry-books-1/       # JSF MVCオンライン書店（研修用1）
+│   │   ├── berry-books-2/       # JSF MVCオンライン書店（研修用2）
 │   │   ├── berry-books-rest/    # JAX-RS REST API
 │   │   ├── jsf_person_rdb/      # JSF + JPA CRUD
 │   │   └── struts_person_rdb/   # Struts 1.3 + EJB
@@ -97,38 +98,50 @@ chmod +x projects/python/accounting_glue/*.sh
 
 ```bash
 # プロジェクトのデータベーステーブルとデータを作成
-# 例：berry-booksの場合
-./gradlew :projects:java:berry-books:setupHsqldb
+# 例：berry-books-1の場合
+./gradlew :projects:java:berry-books-1:setupHsqldb
+# 例：berry-books-2の場合
+./gradlew :projects:java:berry-books-2:setupHsqldb
 
 # プロジェクトをビルド
-./gradlew :projects:java:berry-books:war
+./gradlew :projects:java:berry-books-1:war
+# または
+./gradlew :projects:java:berry-books-2:war
 
 # プロジェクトをデプロイ
-./gradlew :projects:java:berry-books:deploy
+./gradlew :projects:java:berry-books-1:deploy
+# または
+./gradlew :projects:java:berry-books-2:deploy
 ```
 
 ### ⑥ プロジェクトを終了するときに1回だけ実行（CleanUp）
 
 ```bash
 # プロジェクトをアンデプロイ
-# 例：berry-booksの場合
-./gradlew :projects:java:berry-books:undeploy
+# 例：berry-books-1の場合
+./gradlew :projects:java:berry-books-1:undeploy
+# 例：berry-books-2の場合
+./gradlew :projects:java:berry-books-2:undeploy
 ```
 
 ### ⑦ アプリケーション作成・更新のたびに実行
 
 ```bash
 # アプリケーションを再ビルドして再デプロイ
-# 例：berry-booksの場合
-./gradlew :projects:java:berry-books:war
-./gradlew :projects:java:berry-books:deploy
+# 例：berry-books-1の場合
+./gradlew :projects:java:berry-books-1:war
+./gradlew :projects:java:berry-books-1:deploy
+# 例：berry-books-2の場合
+./gradlew :projects:java:berry-books-2:war
+./gradlew :projects:java:berry-books-2:deploy
 ```
 
 ## 🌐 アプリケーションへのアクセス
 
 プロジェクトごとのアクセスURL例：
 ```
-http://localhost:8080/berry-books
+http://localhost:8080/berry-books-1
+http://localhost:8080/berry-books-2
 ```
 
 ## 📊 ログをリアルタイム監視（別のターミナル）
@@ -204,8 +217,10 @@ Excelファイル (.xlsx) を検索してZIP展開するタスクです。Excel�
 **実行例:**
 
 ```bash
-# berry-booksのspecディレクトリを対象にする場合
-./gradlew exploreExcelFiles -PtargetDir=projects/java/berry-books/spec
+# berry-books-1のspecディレクトリを対象にする場合
+./gradlew exploreExcelFiles -PtargetDir=projects/java/berry-books-1/spec
+# berry-books-2のspecディレクトリを対象にする場合
+./gradlew exploreExcelFiles -PtargetDir=projects/java/berry-books-2/spec
 ```
 
 **処理内容:**
@@ -218,7 +233,7 @@ Excelファイル (.xlsx) を検索してZIP展開するタスクです。Excel�
 **出力例:**
 
 ```
-projects/java/berry-books/spec/
+projects/java/berry-books-1/spec/
 ├── 設計書.xlsx
 └── 20251029_143025/        # タイムスタンプフォルダ
     ├── [Content_Types].xml
@@ -372,8 +387,12 @@ Payara Serverのドメインステータスを確認：
 
 アプリケーションをアンデプロイしてから再デプロイ：
 ```bash
-./gradlew :projects:java:berry-books:undeploy
-./gradlew :projects:java:berry-books:deploy
+# berry-books-1の場合
+./gradlew :projects:java:berry-books-1:undeploy
+./gradlew :projects:java:berry-books-1:deploy
+# berry-books-2の場合
+./gradlew :projects:java:berry-books-2:undeploy
+./gradlew :projects:java:berry-books-2:deploy
 ```
 
 ### ビルドエラー

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>CustomerInputPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h2>お客様の情報を登録します</h2>
+    <hr />
+    <h:form styleClass="customer">
+        <table>
+            <tr>
+                <td>顧客名（必須）</td>
+                <td><h:inputText id="customerName" value="#{customerBean.customerName}" 
+                                 maxlength="50" validatorMessage="顧客名の検証に失敗しました">
+                    <f:validateBean />
+                </h:inputText></td>
+                <td>
+                    <h:message for="customerName" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>メールアドレス（必須）</td>
+                <td><h:inputText id="email" value="#{customerBean.email}" 
+                                 maxlength="100" validatorMessage="メールアドレスの検証に失敗しました">
+                    <f:validateBean />
+                </h:inputText></td>
+                <td>
+                    <h:message for="email" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>パスワード（必須）</td>
+                <td><h:inputSecret id="password" value="#{customerBean.password}" 
+                                   maxlength="20" validatorMessage="パスワードの検証に失敗しました">
+                    <f:validateBean />
+                </h:inputSecret></td>
+                <td>
+                    <h:message for="password" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>生年月日（任意）</td>
+                <td><h:inputText id="birthday" value="#{customerBean.birthday}" 
+                                 placeholder="yyyy-MM-dd" validatorMessage="生年月日の検証に失敗しました">
+                    <f:validateBean />
+                </h:inputText></td>
+                <td>
+                    <h:message for="birthday" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>住所（任意）</td>
+                <td><h:inputText id="address" value="#{customerBean.address}" 
+                                 maxlength="200" validatorMessage="住所の検証に失敗しました">
+                    <f:validateBean />
+                </h:inputText></td>
+                <td>
+                    <h:message for="address" styleClass="error" />
+                </td>
+            </tr>
+        </table>
+        <h:commandButton id="registerButton" value="お客様の情報を登録する" action="#{customerBean.register}" />
+        <h:messages globalOnly="true" styleClass="error" />
+        <h:link id="toTopLink" value="トップページへ戻る" outcome="index" />
+    </h:form>
+</h:body>
+</html>
+

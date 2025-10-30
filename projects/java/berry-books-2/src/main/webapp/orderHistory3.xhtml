@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>OrderHistoryPage3</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+    <f:metadata>
+        <f:viewAction action="#{orderBean.loadOrderHistory3}" />
+    </f:metadata>
+</h:head>
+<h:body>
+    <h2>注文履歴</h2>
+    <hr />
+    <table class="book-table">
+        <thead>
+            <tr>
+                <th>注文日</th>
+                <th>注文ID</th>
+                <th>書籍名</th>
+                <th>出版社名</th>
+                <th>価格</th>
+                <th>個数</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <ui:repeat value="#{orderBean.orderList}" var="orderTran">
+                <ui:repeat value="#{orderTran.orderDetails}" var="orderDetail">
+                    <tr>
+                        <td>#{orderDetail.orderTran.orderDate}</td>
+                        <td>#{orderDetail.orderTran.orderTranId}</td>
+                        <td>#{orderDetail.book.bookName}</td>
+                        <td>#{orderDetail.book.publisher.publisherName}</td>
+                        <td>
+                            <h:outputText value="#{orderDetail.price}">
+                                <f:convertNumber pattern="#,###" />
+                            </h:outputText>
+                        </td>
+                        <td>#{orderDetail.count}</td>
+                        <td>
+                            <h:link value="書籍情報" outcome="orderDetail" styleClass="order-link">
+                                <f:param name="tranId" value="#{orderDetail.orderTran.orderTranId}" />
+                                <f:param name="detailId" value="#{orderDetail.orderDetailId}" />
+                            </h:link>
+                        </td>
+                    </tr>
+                </ui:repeat>
+            </ui:repeat>
+        </tbody>
+    </table>
+    <h:link id="toSelectLink" value="書籍の選択ページへ" outcome="bookSelect" />
+    <br />
+    <h:link id="toSearchLink" value="書籍の検索ページへ" outcome="bookSearch" />
+    <br />
+    <h:link id="viewCartLink" value="現在の買い物カゴの内容を表示する" outcome="cartView" />
+</h:body>
+</html>
+
