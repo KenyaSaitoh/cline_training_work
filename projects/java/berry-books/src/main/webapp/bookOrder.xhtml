@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>BookOrderPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+    <script type="text/javascript">
+        function confirmOrder(event) {
+            if (!confirm('注文します。よろしいですか？')) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+    </script>
+</h:head>
+<h:body>
+    <h2>以下の内容で注文します</h2>
+    <hr />
+    <h:form>
+        <table>
+            <tr>
+                <td>顧客名</td>
+                <td>#{customerBean.customer.customerName} 様</td>
+            </tr>
+            <tr>
+                <td>注文内容</td>
+                <td>
+                    <table class="order-items-table">
+                        <tr>
+                            <td>書籍名</td>
+                            <td>金額</td>
+                            <td>注文数</td>
+                        </tr>
+                        <ui:repeat value="#{cartSession.cartItems}" var="cartItem">
+                            <tr>
+                                <td>#{cartItem.bookName}</td>
+                                <td>
+                                    <h:outputText value="#{cartItem.price}">
+                                        <f:convertNumber pattern="#,###" />
+                                    </h:outputText>
+                                </td>
+                                <td>#{cartItem.count}</td>
+                            </tr>
+                        </ui:repeat>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>注文金額合計</td>
+                <td>
+                    <h:outputText value="#{cartSession.totalPrice}">
+                        <f:convertNumber pattern="#,###" />
+                    </h:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td>配送料金</td>
+                <td>
+                    <h:outputText value="#{cartSession.deliveryPrice}">
+                        <f:convertNumber pattern="#,###" />
+                    </h:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td>配送先住所</td>
+                <td>
+                    <h:inputText id="deliveryAddress" value="#{cartSession.deliveryAddress}" 
+                               maxlength="200" validatorMessage="配送先住所の検証に失敗しました">
+                        <f:validateBean />
+                    </h:inputText>
+                    <h:message for="deliveryAddress" styleClass="error" />
+                </td>
+            </tr>
+            <tr>
+                <td>決済方法</td>
+                <td>
+                    <h:selectOneRadio id="settlementType" value="#{cartSession.settlementType}" 
+                                      styleClass="custom-radio" validatorMessage="決済方法の検証に失敗しました">
+                        <f:selectItem itemValue="1" itemLabel="銀行振り込み" />
+                        <f:selectItem itemValue="2" itemLabel="クレジットカード" />
+                        <f:selectItem itemValue="3" itemLabel="着払い" />
+                        <f:validateBean />
+                    </h:selectOneRadio>
+                    <h:message for="settlementType" style="color: red;" />
+                </td>
+            </tr>
+        </table>
+        <br />
+        <h:commandButton id="orderButton1" value="注文する（方式1）" 
+                       action="#{orderBean.placeOrder1}" 
+                       onclick="return confirmOrder(event);" 
+                       style="margin-right: 15px;" />
+        <h:commandButton id="orderButton2" value="注文する（方式2）" 
+                       action="#{orderBean.placeOrder2}" 
+                       onclick="return confirmOrder(event);" />
+        <br />
+        <h:link id="continueLink" value="買い物を続ける" outcome="bookSelect" />
+    </h:form>
+</h:body>
+</html>
+

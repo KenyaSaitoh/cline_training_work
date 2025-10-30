@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>OrderDetailPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+    <f:metadata>
+        <f:viewParam name="tranId" value="#{orderBean.selectedTranId}" />
+        <f:viewParam name="detailId" value="#{orderBean.selectedDetailId}" />
+        <f:viewAction action="#{orderBean.loadOrderDetail}" />
+    </f:metadata>
+</h:head>
+<h:body>
+    <h2>注文した書籍の詳細情報</h2>
+    <hr />
+    <table class="order-detail-table">
+        <tr>
+            <td>注文日</td>
+            <td>#{orderBean.orderDetail.orderTran.orderDate}</td>
+            <td rowspan="5" class="book-image-cell">
+                <h:graphicImage library="images" 
+                              name="covers/#{orderBean.orderDetail.book.bookName.replace(' ', '_')}.jpg"
+                              alt="#{orderBean.orderDetail.book.bookName}"
+                              styleClass="book-thumbnail"
+                              onError="this.onerror=null; this.src='#{request.contextPath}/jakarta.faces.resource/no-image.jpg?ln=images/covers'" />
+            </td>
+        </tr>
+        <tr>
+            <td>書籍名</td>
+            <td>#{orderBean.orderDetail.book.bookName}</td>
+        </tr>
+        <tr>
+            <td>出版社</td>
+            <td>#{orderBean.orderDetail.book.publisher.publisherName}</td>
+        </tr>
+        <tr>
+            <td>カテゴリ</td>
+            <td>#{orderBean.orderDetail.book.category.categoryName}</td>
+        </tr>
+        <tr>
+            <td>価格</td>
+            <td>
+                <h:outputText value="#{orderBean.orderDetail.price}">
+                    <f:convertNumber pattern="#,###" />
+                </h:outputText>
+            </td>
+        </tr>
+    </table>
+    <hr />
+    <h:link id="toSelectLink" value="書籍の選択ページへ" outcome="bookSelect" />
+    <br />
+    <h:link id="toSearchLink" value="書籍の検索ページへ" outcome="bookSearch" />
+</h:body>
+</html>
+

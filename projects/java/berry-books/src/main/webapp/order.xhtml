@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>Berry Books - 注文確認</title>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h2>注文確認</h2>
+    <hr />
+    <h:messages globalOnly="true" styleClass="error" />
+    
+    <h3>注文内容</h3>
+    <h:dataTable value="#{cartBean.cartItems}" var="item"
+                 styleClass="dataTable" headerClass="dataTableHeader">
+        
+        <h:column>
+            <f:facet name="header">書籍名</f:facet>
+            #{item.bookName}
+        </h:column>
+        
+        <h:column>
+            <f:facet name="header">単価</f:facet>
+            <h:outputText value="#{item.price}">
+                <f:convertNumber type="currency" currencySymbol="¥"/>
+            </h:outputText>
+        </h:column>
+        
+        <h:column>
+            <f:facet name="header">数量</f:facet>
+            #{item.count}
+        </h:column>
+        
+        <h:column>
+            <f:facet name="header">小計</f:facet>
+            <h:outputText value="#{item.subtotal}">
+                <f:convertNumber type="currency" currencySymbol="¥"/>
+            </h:outputText>
+        </h:column>
+    </h:dataTable>
+    
+    <h:panelGrid columns="2">
+        <h:outputLabel value="合計:"/>
+        <h:outputText value="#{cartBean.grandTotal}">
+            <f:convertNumber type="currency" currencySymbol="¥"/>
+        </h:outputText>
+    </h:panelGrid>
+    
+    <hr/>
+    
+    <h2>配送情報</h2>
+    <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="deliveryAddress" value="配送先住所:"/>
+            <h:inputText id="deliveryAddress" value="#{orderBean.deliveryAddress}" 
+                        required="true" requiredMessage="配送先住所を入力してください"
+                        size="50"/>
+            
+            <h:outputLabel for="settlementType" value="決済方法:"/>
+            <h:selectOneRadio id="settlementType" value="#{orderBean.settlementType}">
+                <f:selectItem itemValue="1" itemLabel="クレジットカード"/>
+                <f:selectItem itemValue="2" itemLabel="代金引換"/>
+                <f:selectItem itemValue="3" itemLabel="銀行振込"/>
+            </h:selectOneRadio>
+        </h:panelGrid>
+        
+        <h:commandButton value="注文を確定" action="#{orderBean.placeOrder}"/>
+    </h:form>
+    
+    <hr/>
+    <h:link value="カートに戻る" outcome="cart"/>
+</h:body>
+</html>
+
+

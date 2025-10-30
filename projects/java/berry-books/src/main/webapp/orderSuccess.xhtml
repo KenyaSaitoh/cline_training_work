@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>OrderSuccessPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+    <f:metadata>
+        <f:viewParam name="orderTranId" value="#{orderBean.orderTranId}" />
+        <f:viewAction action="#{orderBean.loadOrderSuccess}" />
+    </f:metadata>
+</h:head>
+<h:body>
+    <h2>注文が成功しました</h2>
+    <hr />
+    <div style="margin-bottom: 10px;">注文ID：#{orderBean.orderTran.orderTranId}</div>
+    <div style="margin-bottom: 20px;">合計金額：
+        <h:outputText value="#{orderBean.orderTran.totalPrice}">
+            <f:convertNumber pattern="#,###" />
+        </h:outputText> 円
+    </div>
+    <h3>注文内容</h3>
+    <table class="book-table">
+        <thead>
+            <tr>
+                <th>書籍名</th>
+                <th>注文数</th>
+                <th>価格</th>
+            </tr>
+        </thead>
+        <tbody>
+            <ui:repeat value="#{orderBean.orderTran.orderDetails}" var="orderDetail">
+                <tr>
+                    <td>#{orderDetail.book.bookName}</td>
+                    <td>#{orderDetail.count}</td>
+                    <td>
+                        <h:outputText value="#{orderDetail.price}">
+                            <f:convertNumber pattern="#,###" />
+                        </h:outputText> 円
+                    </td>
+                </tr>
+            </ui:repeat>
+        </tbody>
+    </table>
+    <h:link value="注文履歴を表示する" outcome="orderHistory" />
+    <br />
+    <h:link value="書籍の選択ページへ" outcome="bookSelect" />
+    <br />
+    <hr />
+    <h:form>
+        <h:commandButton id="logoutButton" value="ログアウト" action="#{loginBean.processLogout}" />
+    </h:form>
+</h:body>
+</html>
+
