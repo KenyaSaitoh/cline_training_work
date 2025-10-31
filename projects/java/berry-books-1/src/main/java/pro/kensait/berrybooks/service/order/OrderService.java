@@ -146,14 +146,8 @@ public class OrderService implements OrderServiceIF {
             // これにより、他のユーザーが在庫を更新してもOptimisticLockExceptionが発生しない
             stock.setVersion(currentStock.getVersion());  // 本来はcartItem.getVersion()を使うべき
 
-            // 在庫が0未満になる場合は、例外を送出する
+            // 在庫を減らす（マイナスになることも許容する）
             int remaining = currentStock.getQuantity() - cartItem.getCount();
-            if (remaining < 0) {
-                throw new OutOfStockException(
-                        cartItem.getBookId(),
-                        cartItem.getBookName(),
-                        "在庫不足");
-            }
 
             // 在庫を減らす（現在のVERSION値を持つStockエンティティで更新）
             // 本来はカート追加時点のVERSION値を使うべきだが、現在のVERSIONを使っているため
