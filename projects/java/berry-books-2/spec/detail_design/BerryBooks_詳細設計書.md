@@ -205,6 +205,10 @@ pro.kensait.berrybooks/
 │       ├── OrderSummaryTO.java    # 注文サマリTO
 │       └── OutOfStockException.java # 在庫不足例外
 │
+├── common/                    # 共通ユーティリティ・定数
+│   ├── MessageUtil.java       # メッセージ取得ユーティリティ
+│   └── SettlementType.java    # 決済方法Enum（定数化）
+│
 ├── util/                      # ユーティリティ
 │   └── AddressUtil.java       # 住所関連ユーティリティ
 │
@@ -600,9 +604,11 @@ pro.kensait.berrybooks/
 |------------|---|------|
 | `cartItems` | `List<CartItem>` | カートに追加された書籍のリスト（スレッドセーフ） |
 | `totalPrice` | `BigDecimal` | 商品合計金額 |
-| `deliveryPrice` | `BigDecimal` | 配送料金（1冊250円、4冊以上は1000円固定） |
+| `deliveryPrice` | `BigDecimal` | 配送料金（標準：800円、沖縄県：1700円、5000円以上：無料） |
 | `deliveryAddress` | `String` | 配送先住所 |
-| `settlementType` | `Integer` | 決済方法（1:銀行振込、2:クレジットカード、3:着払い） |
+| `settlementType` | `Integer` | 決済方法コード（`SettlementType`参照：1=銀行振り込み、2=クレジットカード、3=着払い） |
+
+**備考:** `settlementType`は`Integer`型で保持されるが、`CartSession.getSettlementTypeName()`メソッドで`SettlementType` Enumを使用して表示名を取得可能
 
 ### 7.3 CartItemデータ構造
 
@@ -1054,7 +1060,7 @@ customer.api.base-url = http://localhost:8081/customers
 | TOTAL_PRICE | INT | NOT NULL | - | - | 注文金額合計（円） |
 | DELIVERY_PRICE | INT | NOT NULL | - | - | 配送料金（円） |
 | DELIVERY_ADDRESS | VARCHAR(30) | NOT NULL | - | - | 配送先住所 |
-| SETTLEMENT_TYPE | INT | NOT NULL | - | - | 決済方法（1:銀行振込、2:クレジットカード、3:着払い） |
+| SETTLEMENT_TYPE | INT | NOT NULL | - | - | 決済方法コード（`SettlementType` Enum：1=銀行振り込み、2=クレジットカード、3=着払い） |
 
 **主キー:** `ORDER_TRAN_ID`
 
@@ -1138,11 +1144,21 @@ customer.api.base-url = http://localhost:8081/customers
 
 ### 12.1 決済方法コード
 
-| コード | 名称 |
-|-------|------|
-| 1 | 銀行振り込み |
-| 2 | クレジットカード |
-| 3 | 着払い |
+**実装方式:** Enumクラスによる定数管理（`pro.kensait.berrybooks.common.SettlementType`）
+
+| Enum値 | コード | 表示名 |
+|--------|-------|--------|
+| `BANK_TRANSFER` | 1 | 銀行振り込み |
+| `CREDIT_CARD` | 2 | クレジットカード |
+| `CASH_ON_DELIVERY` | 3 | 着払い |
+
+**主要メソッド:**
+- `getCode()`: 決済方法コードを取得
+- `getDisplayName()`: 表示名を取得
+- `fromCode(Integer code)`: コードからEnum値に変換
+- `getDisplayNameByCode(Integer code)`: コードから表示名を取得（nullセーフ）
+
+**データベース保存形式:** INTEGER型（1, 2, 3）
 
 ### 12.2 配送料金計算ロジック定数
 
@@ -1184,221 +1200,120 @@ customer.api.base-url = http://localhost:8081/customers
 
 ### 13.1 エラーメッセージ管理方式
 
-Berry Booksでは、エラーメッセージを以下の2つの方式で管理しています。
+**管理方式:** プロパティファイル（`messages.properties`）で一元管理
 
-#### 13.1.1 メッセージプロパティファイル方式
+**実装クラス:** `MessageUtil`（`pro.kensait.berrybooks.common`）
 
-**ファイル:** `src/main/resources/messages.properties`
+| 項目 | 内容 |
+|------|------|
+| **プロパティファイル** | `src/main/resources/messages.properties` |
+| **取得方法** | `MessageUtil.get("error.xxx")` |
+| **国際化対応** | messages_en.properties など追加可能 |
 
-Spring FrameworkやBean Validation用のメッセージキーと内容を定義。国際化（i18n）に対応可能。
+### 13.2 エラーメッセージ一覧
 
-| メッセージキー | メッセージ内容 | 用途 |
-|-------------|-------------|------|
-| `typeMismatch.int` | 数値を入力してください | 型変換エラー（整数型） |
-| `typeMismatch.java.time.LocalDate` | yyyy/M/d形式で入力してください | 型変換エラー（日付型） |
-| `error.address.prefecture` | 都道府県名が正しく入力されていません | 住所検証エラー |
-| `error.customer.exists` | すでに指定されたメールアドレスは登録されています | 顧客登録時の重複エラー |
-| `error.email.not-exist` | メールアドレスが存在しません | ログイン時の検索エラー |
-| `error.password.unmatch` | 指定されたパスワードが間違っているようです | ログイン時の認証エラー |
-| `error.cart.empty` | カートに商品が一つも入っていません | カート空エラー |
-| `error.order.outof-stock` | 注文された書籍「{0}」は、指定された個数、在庫に存在しません | 在庫不足エラー |
-| `error.order.optimistic-lock` | 別の顧客によって在庫が更新されました | 楽観的ロック競合エラー |
+#### 13.2.1 型変換エラー
 
-#### 13.1.2 ErrorMessage定数クラス方式
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `typeMismatch.int` | 数値を入力してください |
+| `typeMismatch.java.time.LocalDate` | yyyy/M/d形式で入力してください |
 
-**ファイル:** `pro.kensait.berrybooks.common.ErrorMessage`
+#### 13.2.2 共通エラー
 
-Javaコード内で直接参照するエラーメッセージを定数として定義。コンパイル時の型安全性を確保。
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.email.required` | メールアドレスを入力してください |
+| `error.email.invalid` | 有効なメールアドレスを入力してください |
+| `error.password.required` | パスワードを入力してください |
+| `error.general` | エラーが発生しました |
 
-**共通メッセージ:**
+#### 13.2.3 顧客登録関連エラー
 
-| 定数名 | メッセージ内容 | 用途 |
-|-------|-------------|------|
-| `EMAIL_REQUIRED` | メールアドレスを入力してください | 必須入力チェック |
-| `EMAIL_INVALID` | 有効なメールアドレスを入力してください | メールアドレス形式チェック |
-| `PASSWORD_REQUIRED` | パスワードを入力してください | 必須入力チェック |
-| `GENERAL_ERROR` | エラーが発生しました | 一般エラー |
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.customer.name.required` | 顧客名を入力してください |
+| `error.customer.name.max-length` | 顧客名は50文字以内で入力してください |
+| `error.email.max-length` | メールアドレスは100文字以内で入力してください |
+| `error.password.length` | パスワードは8文字以上20文字以内で入力してください |
+| `error.birthday.format` | 生年月日はyyyy-MM-dd形式で入力してください（例：1990-01-15） |
+| `error.birthday.parse-error` | 生年月日の形式が正しくありません（例：1990-01-15） |
+| `error.address.max-length` | 住所は200文字以内で入力してください |
+| `error.address.invalid-prefecture` | 住所は正しい都道府県名で始まる必要があります |
+| `error.registration` | 登録中にエラーが発生しました |
+| `error.email.already-exists` | このメールアドレスは既に登録されています |
 
-**顧客登録関連メッセージ:**
+#### 13.2.4 ログイン関連エラー
 
-| 定数名 | メッセージ内容 | 用途 |
-|-------|-------------|------|
-| `CUSTOMER_NAME_REQUIRED` | 顧客名を入力してください | 必須入力チェック |
-| `CUSTOMER_NAME_MAX_LENGTH` | 顧客名は50文字以内で入力してください | 文字数上限チェック |
-| `EMAIL_MAX_LENGTH` | メールアドレスは100文字以内で入力してください | 文字数上限チェック |
-| `PASSWORD_LENGTH` | パスワードは8文字以上20文字以内で入力してください | パスワード長チェック |
-| `BIRTHDAY_FORMAT` | 生年月日はyyyy-MM-dd形式で入力してください（例：1990-01-15） | 日付形式チェック |
-| `BIRTHDAY_PARSE_ERROR` | 生年月日の形式が正しくありません（例：1990-01-15） | 日付パースエラー |
-| `ADDRESS_MAX_LENGTH` | 住所は200文字以内で入力してください | 文字数上限チェック |
-| `ADDRESS_INVALID_PREFECTURE` | 住所は正しい都道府県名で始まる必要があります | 都道府県名検証エラー |
-| `REGISTRATION_ERROR` | 登録中にエラーが発生しました | 登録処理エラー |
-| `EMAIL_ALREADY_EXISTS` | このメールアドレスは既に登録されています | メールアドレス重複エラー |
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.login.failed` | ログインに失敗しました |
+| `error.login.invalid-credentials` | メールアドレスまたはパスワードが正しくありません |
 
-**ログイン関連メッセージ:**
+#### 13.2.5 カート・注文関連エラー
 
-| 定数名 | メッセージ内容 | 用途 |
-|-------|-------------|------|
-| `LOGIN_FAILED` | ログインに失敗しました | ログイン失敗 |
-| `LOGIN_INVALID_CREDENTIALS` | メールアドレスまたはパスワードが正しくありません | 認証失敗 |
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.delivery-address.required` | 配送先住所を入力してください |
+| `error.delivery-address.max-length` | 配送先住所は200文字以内で入力してください |
+| `error.delivery-address.invalid-prefecture` | 配送先住所は正しい都道府県名で始まる必要があります |
+| `error.settlement-type.required` | 決済方法を選択してください |
+| `error.out-of-stock.message` | 在庫不足 |
+| `error.out-of-stock` | 在庫不足:  |
+| `error.optimistic-lock` | 他のユーザーが同時に注文しました。もう一度お試しください |
+| `error.order-processing` | 注文処理中にエラーが発生しました:  |
 
-**カート・注文関連メッセージ:**
+#### 13.2.6 データ検索エラー
 
-| 定数名 | メッセージ内容 | 用途 |
-|-------|-------------|------|
-| `DELIVERY_ADDRESS_REQUIRED` | 配送先住所を入力してください | 必須入力チェック |
-| `DELIVERY_ADDRESS_MAX_LENGTH` | 配送先住所は200文字以内で入力してください | 文字数上限チェック |
-| `DELIVERY_ADDRESS_INVALID_PREFECTURE` | 配送先住所は正しい都道府県名で始まる必要があります | 都道府県名検証エラー |
-| `SETTLEMENT_TYPE_REQUIRED` | 決済方法を選択してください | 必須選択チェック |
-| `OUT_OF_STOCK_MESSAGE` | 在庫不足 | OutOfStockException用の基本メッセージ |
-| `OUT_OF_STOCK` | 在庫不足: | 画面表示用プレフィックス |
-| `OPTIMISTIC_LOCK_ERROR` | 他のユーザーが同時に注文しました。もう一度お試しください | 楽観的ロック競合エラー |
-| `ORDER_PROCESSING_ERROR` | 注文処理中にエラーが発生しました: | 注文処理一般エラー |
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.book.not-found` | Book not found:  |
+| `error.order-tran.not-found` | OrderTran not found for ID:  |
+| `error.order-detail.not-found` | OrderDetail not found for PK: |
 
-**データ検索エラーメッセージ:**
+#### 13.2.7 既存メッセージ（後方互換性維持）
 
-| 定数名 | メッセージ内容 | 用途 |
-|-------|-------------|------|
-| `BOOK_NOT_FOUND` | Book not found: | 書籍が見つからない |
-| `ORDER_TRAN_NOT_FOUND` | OrderTran not found for ID: | 注文取引が見つからない |
-| `ORDER_DETAIL_NOT_FOUND` | OrderDetail not found for PK: | 注文明細が見つからない |
+| メッセージキー | メッセージ内容 |
+|--------------|-------------|
+| `error.address.prefecture` | 都道府県名が正しく入力されていません |
+| `error.customer.exists` | すでに指定されたメールアドレスは登録されています |
+| `error.email.not-exist` | メールアドレスが存在しません |
+| `error.password.unmatch` | 指定されたパスワードが間違っているようです |
+| `error.cart.empty` | カートに商品が一つも入っていません |
+| `error.order.outof-stock` | 注文された書籍「{0}」は、指定された個数、在庫に存在しません |
+| `error.order.optimistic-lock` | 別の顧客によって在庫が更新されました |
 
-### 13.2 画面表示メッセージとハンドリング
+### 13.3 画面表示メッセージとハンドリング
 
-#### 13.2.1 ログイン失敗
+#### 13.3.1 ログイン失敗
 
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | LoginBean.processLogin() |
-| サマリー | ログインに失敗しました | - |
-| 詳細 | メールアドレスまたはパスワードが正しくありません | - |
-| 定数 | `ErrorMessage.LOGIN_FAILED` / `LOGIN_INVALID_CREDENTIALS` | - |
-| 表示方法 | FacesMessage（ERROR） | index.xhtml |
+| 項目 | 内容 |
+|------|------|
+| **メッセージキー** | `error.login.failed` / `error.login.invalid-credentials` |
+| **使用箇所** | LoginBean.processLogin() |
+| **表示方法** | FacesMessage（ERROR） |
 
-**発生条件:**
-- メールアドレスが存在しない
-- パスワードが一致しない
+**発生条件:** メールアドレス不存在、またはパスワード不一致
 
-**処理フロー:**
-1. `CustomerService.authenticate()`がnullを返却
-2. `LoginBean`でFacesMessageを追加
-3. index.xhtmlにメッセージ表示
+#### 13.3.2 在庫不足エラー
 
-#### 13.2.2 メールアドレス重複エラー
+| 項目 | 内容 |
+|------|------|
+| **例外クラス** | `OutOfStockException` |
+| **メッセージキー** | `error.out-of-stock` |
+| **使用箇所** | OrderBean.placeOrder() |
 
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | CustomerBean.register() |
-| 内容 | このメールアドレスは既に登録されています | - |
-| 定数 | `ErrorMessage.EMAIL_ALREADY_EXISTS` | - |
-| 例外クラス | `EmailAlreadyExistsException` | - |
-| 表示方法 | FacesMessage（ERROR） | customerInput.xhtml |
+**発生条件:** 注文数が在庫数を超える場合
 
-**発生条件:**
-- 新規顧客登録時に既存メールアドレスを入力
+#### 13.3.3 楽観的ロック競合エラー
 
-**処理フロー:**
-1. `CustomerService.registerCustomer()`で重複チェック
-2. 既存顧客が存在する場合、`EmailAlreadyExistsException`をスロー
-3. `CustomerBean.register()`でキャッチし、FacesMessageを追加
-4. customerInput.xhtmlにメッセージ表示（入力画面に留まる）
+| 項目 | 内容 |
+|------|------|
+| **例外クラス** | `OptimisticLockException` |
+| **メッセージキー** | `error.optimistic-lock` |
+| **使用箇所** | OrderBean.placeOrder() |
 
-#### 13.2.3 カート空エラー
-
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | WARN | OrderBean.placeOrder() |
-| 内容 | カートに商品が一つも入っていません | - |
-| 定数 | （messages.properties: `error.cart.empty`） | - |
-| 表示方法 | FacesMessage（WARN） | bookOrder.xhtml |
-
-**発生条件:**
-- カートが空の状態で注文確定ボタンをクリック
-
-**処理フロー:**
-1. `OrderBean.placeOrder()`で`CartSession.getCartItems()`が空をチェック
-2. FacesMessageを追加
-3. 注文処理を中止
-
-#### 13.2.4 在庫不足エラー
-
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | OrderBean.placeOrder() |
-| 内容 | 在庫不足: {書籍名} | orderError.xhtml |
-| 定数 | `ErrorMessage.OUT_OF_STOCK` + bookName | - |
-| 例外クラス | `OutOfStockException` | - |
-| 表示方法 | Flash Scope経由でorderError.xhtmlへ遷移 | - |
-
-**発生条件:**
-- 注文数が現在の在庫数を超える場合
-
-**処理フロー:**
-1. `OrderService.orderBooks()`で在庫数チェック
-2. 在庫不足の場合、`OutOfStockException(bookId, bookName, message)`をスロー
-3. `OrderBean.placeOrder()`でキャッチ
-4. エラーメッセージをFlash Scopeに設定
-5. orderError.xhtmlへリダイレクト
-
-#### 13.2.5 楽観的ロック競合エラー
-
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | OrderBean.placeOrder() |
-| 内容 | 他のユーザーが同時に注文しました。もう一度お試しください | orderError.xhtml |
-| 定数 | `ErrorMessage.OPTIMISTIC_LOCK_ERROR` | - |
-| 例外クラス | `jakarta.persistence.OptimisticLockException` | - |
-| 表示方法 | Flash Scope経由でorderError.xhtmlへ遷移 | - |
-
-**発生条件:**
-- カート追加時点のVERSION値と注文時点のVERSION値が不一致
-- 他のユーザーが先に在庫を更新していた場合
-
-**処理フロー:**
-1. `OrderService.orderBooks()`で`stockDao.update(stock)`を実行
-2. JPA（@Version）が自動的にバージョンチェック
-3. バージョン不一致の場合、JPAが`OptimisticLockException`をスロー
-4. `OrderBean.placeOrder()`でキャッチ
-5. エラーメッセージをFlash Scopeに設定
-6. orderError.xhtmlへリダイレクト
-
-#### 13.2.6 住所検証エラー
-
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | CustomerBean.register() / OrderBean.placeOrder() |
-| 内容 | 住所は正しい都道府県名で始まる必要があります | - |
-| 定数 | `ErrorMessage.ADDRESS_INVALID_PREFECTURE` | - |
-| 表示方法 | FacesMessage（ERROR） | customerInput.xhtml / bookOrder.xhtml |
-
-**検証方式:**
-- **AddressUtilクラス**による手動バリデーション
-- 47都道府県の正式名称で始まるかをチェック
-  - 都道府県：北海道、東京都、京都府、大阪府、〇〇県（43県）
-- 顧客登録時および注文時の配送先住所で実施
-- Bean Validationではなく、サービス層またはManaged Bean層で明示的にチェック
-
-**処理フロー:**
-1. `AddressUtil.startsWithValidPrefecture(address)`でチェック
-2. 検証失敗の場合、FacesMessageを追加
-3. 画面に留まる（遷移しない）
-
-#### 13.2.7 注文処理一般エラー
-
-| メッセージ種別 | メッセージ | 使用箇所 |
-|-------------|----------|---------|
-| SEVERITY | ERROR | OrderBean.placeOrder() |
-| 内容 | 注文処理中にエラーが発生しました: {エラー詳細} | orderError.xhtml |
-| 定数 | `ErrorMessage.ORDER_PROCESSING_ERROR` + e.getMessage() | - |
-| 例外クラス | `Exception` (キャッチオール) | - |
-| 表示方法 | Flash Scope経由でorderError.xhtmlへ遷移 | - |
-
-**発生条件:**
-- 上記以外の予期しないエラー（DB接続エラー、トランザクションエラーなど）
-
-**処理フロー:**
-1. `OrderBean.placeOrder()`の最後の`catch (Exception e)`でキャッチ
-2. エラーメッセージをFlash Scopeに設定
-3. orderError.xhtmlへリダイレクト
+**発生条件:** カート追加後に他ユーザーが在庫を更新
 
 ---
 

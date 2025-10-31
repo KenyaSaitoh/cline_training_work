@@ -20,12 +20,11 @@ public class OrderDetailPK implements Serializable {
         this.orderDetailId = orderDetailId;
     }
 
-    // 注文IDへのアクセサメソッド（ゲッタのみ）
+    // アクセサメソッド
     public Integer getOrderTranId() {
         return orderTranId;
     }
 
-    // 注文明細IDへのアクセサメソッド（ゲッタのみ）
     public Integer getOrderDetailId() {
         return orderDetailId;
     }

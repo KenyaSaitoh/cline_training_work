@@ -3,7 +3,7 @@ package pro.kensait.berrybooks.service.customer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.CustomerDao;
 import pro.kensait.berrybooks.entity.Customer;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,7 +27,8 @@ public class CustomerService {
         // メールアドレスの重複チェック
         Customer existing = customerDao.findByEmail(customer.getEmail());
         if (existing != null) {
-            throw new EmailAlreadyExistsException(customer.getEmail(), ErrorMessage.EMAIL_ALREADY_EXISTS);
+            throw new EmailAlreadyExistsException(customer.getEmail(), 
+                    MessageUtil.get("error.email.already-exists"));
         }
         
         customerDao.register(customer);

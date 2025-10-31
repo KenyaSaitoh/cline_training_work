@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import pro.kensait.berrybooks.common.SettlementType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -51,7 +52,7 @@ public class OrderTran implements Serializable {
     @Column(name = "DELIVERY_ADDRESS")
     private String deliveryAddress;
 
-    // 決済方法へのアクセサメソッド
+    // 決済方法
     @Column(name = "SETTLEMENT_TYPE")
     private Integer settlementType;
 
@@ -70,6 +71,7 @@ public class OrderTran implements Serializable {
         this.settlementType = settlementType;
     }
 
+    // アクセサメソッド
     public Integer getOrderTranId() {
         return orderTranId;
     }
@@ -132,6 +134,11 @@ public class OrderTran implements Serializable {
     
     public void setSettlementType(Integer settlementType) {
         this.settlementType = settlementType;
+    }
+
+    // 決済方法の表示名を取得するヘルパーメソッド
+    public String getSettlementTypeName() {
+        return SettlementType.getDisplayNameByCode(settlementType);
     }
 
     @Override

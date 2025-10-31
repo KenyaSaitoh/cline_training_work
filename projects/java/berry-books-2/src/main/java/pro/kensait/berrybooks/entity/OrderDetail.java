@@ -65,6 +65,7 @@ public class OrderDetail implements Serializable {
         this.count = count;
     }
 
+    // アクセサメソッド
     public int getOrderDetailId() {
         return orderDetailId;
     }

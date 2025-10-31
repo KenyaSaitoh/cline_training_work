@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.StockDao;
 import pro.kensait.berrybooks.entity.Book;
 import pro.kensait.berrybooks.entity.Stock;
@@ -136,9 +137,9 @@ public class CartBean implements Serializable {
         logger.info("[ CartBean#viewCart ]");
 
         // カートに商品が一つも入っていなかった場合は、エラーメッセージを設定
-        if (cartSession.getCartItems().size() == 0) {
+        if (cartSession.getCartItems().isEmpty()) {
             logger.info("[ CartBean#viewCart ] カートに商品なしエラー");
-            globalErrorMessage = "カートに商品が入っていません";
+            globalErrorMessage = MessageUtil.get("error.cart.empty");
         }
 
         return "cartView?faces-redirect=true";
@@ -155,7 +156,7 @@ public class CartBean implements Serializable {
         this.globalErrorMessage = globalErrorMessage;
     }
 
-    // CartSessionへの委譲メソッド
+    // アクセサメソッド（CartSessionへの委譲）
     public BigDecimal getTotalPrice() {
         return cartSession.getTotalPrice();
     }

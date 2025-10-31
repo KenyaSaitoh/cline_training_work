@@ -68,6 +68,7 @@ public class Book implements Serializable {
         this.quantity = quantity;
     }
 
+    // アクセサメソッド
     public Integer getBookId() {
         return bookId;
     }

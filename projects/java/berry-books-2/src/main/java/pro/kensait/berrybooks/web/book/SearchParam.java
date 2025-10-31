@@ -13,6 +13,7 @@ public class SearchParam {
         this.keyword = keyword;
     }
 
+    // アクセサメソッド
     public Integer getCategoryId() {
         return categoryId;
     }

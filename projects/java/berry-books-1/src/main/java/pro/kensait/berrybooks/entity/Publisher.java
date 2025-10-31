@@ -31,6 +31,7 @@ public class Publisher implements Serializable {
         this.publisherName = publisherName;
     }
 
+    // アクセサメソッド
     public int getPublisherId() {
         return publisherId;
     }

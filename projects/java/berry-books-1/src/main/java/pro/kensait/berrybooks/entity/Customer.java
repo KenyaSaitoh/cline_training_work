@@ -45,6 +45,7 @@ public class Customer {
         this.address = address;
     }
 
+    // アクセサメソッド
     public Integer getCustomerId() {
         return customerId;
     }

@@ -9,7 +9,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.entity.OrderDetail;
 import pro.kensait.berrybooks.entity.OrderTran;
@@ -87,7 +87,7 @@ public class OrderBean implements Serializable {
                     !cartSession.getDeliveryAddress().isBlank() && 
                     !AddressUtil.startsWithValidPrefecture(cartSession.getDeliveryAddress())) {
                 logger.info("[ OrderBean#placeOrderInternal ] 配送先住所入力エラー");
-                errorMessage = ErrorMessage.DELIVERY_ADDRESS_INVALID_PREFECTURE;
+                errorMessage = MessageUtil.get("error.delivery-address.invalid-prefecture");
                 setFlashErrorMessage(errorMessage);
                 return "orderError?faces-redirect=true";
             }
@@ -125,18 +125,18 @@ public class OrderBean implements Serializable {
 
         } catch (OutOfStockException e) {
             logger.error("在庫不足エラー", e);
-            errorMessage = ErrorMessage.OUT_OF_STOCK + e.getBookName();
+            errorMessage = MessageUtil.get("error.out-of-stock") + e.getBookName();
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
 
         } catch (OptimisticLockException e) {
             logger.error("楽観的ロックエラー", e);
-            errorMessage = ErrorMessage.OPTIMISTIC_LOCK_ERROR;
+            errorMessage = MessageUtil.get("error.optimistic-lock");
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
         } catch (Exception e) {
             logger.error("注文エラー", e);
-            errorMessage = ErrorMessage.ORDER_PROCESSING_ERROR + e.getMessage();
+            errorMessage = MessageUtil.get("error.order-processing") + e.getMessage();
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
         }
@@ -198,7 +198,7 @@ public class OrderBean implements Serializable {
                 .put("errorMessage", message);
     }
 
-    // Getters and Setters (CartSessionへの委譲)
+    // アクセサメソッド（CartSessionへの委譲）
     public String getDeliveryAddress() {
         return cartSession.getDeliveryAddress();
     }

@@ -31,6 +31,7 @@ public class Category implements Serializable {
         this.categoryName = categoryName;
     }
 
+    // アクセサメソッド
     public Integer getCategoryId() {
         return categoryId;
     }

@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.service.customer.CustomerService;
 import pro.kensait.berrybooks.service.customer.EmailAlreadyExistsException;
@@ -37,24 +37,24 @@ public class CustomerBean implements Serializable {
     private Customer customer;
 
     // 登録フォームの入力値
-    @NotBlank(message = ErrorMessage.CUSTOMER_NAME_REQUIRED)
-    @Size(max = 50, message = ErrorMessage.CUSTOMER_NAME_MAX_LENGTH)
+    @NotBlank(message = "{error.customer.name.required}")
+    @Size(max = 50, message = "{error.customer.name.max-length}")
     private String customerName;
     
-    @NotBlank(message = ErrorMessage.EMAIL_REQUIRED)
-    @Email(message = ErrorMessage.EMAIL_INVALID)
-    @Size(max = 100, message = ErrorMessage.EMAIL_MAX_LENGTH)
+    @NotBlank(message = "{error.email.required}")
+    @Email(message = "{error.email.invalid}")
+    @Size(max = 100, message = "{error.email.max-length}")
     private String email;
     
-    @NotBlank(message = ErrorMessage.PASSWORD_REQUIRED)
-    @Size(min = 8, max = 20, message = ErrorMessage.PASSWORD_LENGTH)
+    @NotBlank(message = "{error.password.required}")
+    @Size(min = 8, max = 20, message = "{error.password.length}")
     private String password;
     
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$|^$", 
-             message = ErrorMessage.BIRTHDAY_FORMAT)
+             message = "{error.birthday.format}")
     private String birthday; // yyyy-MM-dd形式の文字列
     
-    @Size(max = 200, message = ErrorMessage.ADDRESS_MAX_LENGTH)
+    @Size(max = 200, message = "{error.address.max-length}")
     private String address;
 
     // 顧客登録処理
@@ -66,7 +66,7 @@ public class CustomerBean implements Serializable {
             // 住所に対する入力チェック（正しい都道府県名で始まっているか）
             if (address != null && !address.isBlank() && !AddressUtil.startsWithValidPrefecture(address)) {
                 logger.info("[ CustomerBean#register ] 住所入力エラー");
-                addErrorMessage(ErrorMessage.ADDRESS_INVALID_PREFECTURE);
+                addErrorMessage(MessageUtil.get("error.address.invalid-prefecture"));
                 return null;
             }
 
@@ -84,7 +84,7 @@ public class CustomerBean implements Serializable {
                     newCustomer.setBirthday(birthDate);
                 } catch (Exception e) {
                     logger.warn("Birthday parse error: " + birthday, e);
-                    addErrorMessage(ErrorMessage.BIRTHDAY_PARSE_ERROR);
+                    addErrorMessage(MessageUtil.get("error.birthday.parse-error"));
                     return null;
                 }
             }
@@ -105,7 +105,7 @@ public class CustomerBean implements Serializable {
             return null;
         } catch (Exception e) {
             logger.error("Registration error", e);
-            addErrorMessage(ErrorMessage.REGISTRATION_ERROR);
+            addErrorMessage(MessageUtil.get("error.registration"));
             return null;
         }
     }
@@ -116,7 +116,7 @@ public class CustomerBean implements Serializable {
                 new FacesMessage(FacesMessage.SEVERITY_ERROR, message, null));
     }
 
-    // Getters and Setters
+    // アクセサメソッド
     public Customer getCustomer() {
         return customer;
     }

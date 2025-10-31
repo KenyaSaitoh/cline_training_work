@@ -5,12 +5,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import pro.kensait.berrybooks.common.SettlementType;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import pro.kensait.berrybooks.common.ErrorMessage;
 
 // ショッピングカートのセッション情報を管理するクラス
 @Named
@@ -28,12 +28,12 @@ public class CartSession implements Serializable {
     private BigDecimal deliveryPrice = BigDecimal.ZERO;
     
     // 配送先住所
-    @NotBlank(message = ErrorMessage.DELIVERY_ADDRESS_REQUIRED)
-    @Size(max = 200, message = ErrorMessage.DELIVERY_ADDRESS_MAX_LENGTH)
+    @NotBlank(message = "{error.delivery-address.required}")
+    @Size(max = 200, message = "{error.delivery-address.max-length}")
     private String deliveryAddress;
     
     // 決済方法
-    @NotNull(message = ErrorMessage.SETTLEMENT_TYPE_REQUIRED)
+    @NotNull(message = "{error.settlement-type.required}")
     private Integer settlementType;
 
     // 引数の無いコンストラクタ
@@ -97,6 +97,11 @@ public class CartSession implements Serializable {
 
     public void setSettlementType(Integer settlementType) {
         this.settlementType = settlementType;
+    }
+
+    // 決済方法の表示名を取得するヘルパーメソッド
+    public String getSettlementTypeName() {
+        return SettlementType.getDisplayNameByCode(settlementType);
     }
 
     @Override

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.service.customer.CustomerService;
 import pro.kensait.berrybooks.web.customer.CustomerBean;
@@ -32,11 +32,11 @@ public class LoginBean implements Serializable {
     private CustomerBean customerBean;
 
     // ログインフォームの入力値
-    @NotBlank(message = ErrorMessage.EMAIL_REQUIRED)
-    @Email(message = ErrorMessage.EMAIL_INVALID)
+    @NotBlank(message = "{error.email.required}")
+    @Email(message = "{error.email.invalid}")
     private String email;
     
-    @NotBlank(message = ErrorMessage.PASSWORD_REQUIRED)
+    @NotBlank(message = "{error.password.required}")
     private String password;
 
     // ログイン済みフラグ
@@ -52,8 +52,8 @@ public class LoginBean implements Serializable {
             if (customer == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                ErrorMessage.LOGIN_FAILED,
-                                ErrorMessage.LOGIN_INVALID_CREDENTIALS));
+                                MessageUtil.get("error.login.failed"),
+                                MessageUtil.get("error.login.invalid-credentials")));
                 return null;
             }
 
@@ -70,7 +70,7 @@ public class LoginBean implements Serializable {
             logger.error("Login error", e);
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            ErrorMessage.GENERAL_ERROR, e.getMessage()));
+                            MessageUtil.get("error.general"), e.getMessage()));
             return null;
         }
     }
@@ -86,7 +86,7 @@ public class LoginBean implements Serializable {
         return "index?faces-redirect=true";
     }
 
-    // Getters and Setters
+    // アクセサメソッド
     public String getEmail() {
         return email;
     }

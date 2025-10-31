@@ -35,6 +35,7 @@ public class Stock {
         this.version = version;
     }
 
+    // アクセサメソッド
     public Integer getBookId() {
         return bookId;
     }

@@ -124,7 +124,7 @@ public class BookSearchBean implements Serializable {
         }
     }
 
-    // Getters and Setters
+    // アクセサメソッド
     public Integer getCategoryId() {
         return categoryId;
     }

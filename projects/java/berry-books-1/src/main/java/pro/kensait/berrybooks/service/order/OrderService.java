@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.BookDao;
 import pro.kensait.berrybooks.dao.OrderDetailDao;
 import pro.kensait.berrybooks.dao.OrderTranDao;
@@ -80,7 +80,7 @@ public class OrderService implements OrderServiceIF {
         // 注文IDから注文エンティティを取得し、返す
         OrderTran orderTran = orderTranDao.findById(orderTranId);
         if (orderTran == null) {
-            throw new RuntimeException(ErrorMessage.ORDER_TRAN_NOT_FOUND + orderTranId);
+            throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
         }
         return orderTran;
     }
@@ -93,7 +93,7 @@ public class OrderService implements OrderServiceIF {
         // 注文IDから注文エンティティを明細と共に取得し、返す
         OrderTran orderTran = orderTranDao.findByIdWithDetails(orderTranId);
         if (orderTran == null) {
-            throw new RuntimeException(ErrorMessage.ORDER_TRAN_NOT_FOUND + orderTranId);
+            throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
         }
         return orderTran;
     }
@@ -106,7 +106,7 @@ public class OrderService implements OrderServiceIF {
         // 複合主キー（注文IDと注文明細ID）から注文明細エンティティを取得し、返す
         OrderDetail orderDetail = orderDetailDao.findById(pk);
         if (orderDetail == null) {
-            throw new RuntimeException(ErrorMessage.ORDER_DETAIL_NOT_FOUND + pk);
+            throw new RuntimeException(MessageUtil.get("error.order-detail.not-found") + pk);
         }
         return orderDetail;
     }
@@ -154,7 +154,7 @@ public class OrderService implements OrderServiceIF {
                 throw new OutOfStockException(
                         cartItem.getBookId(),
                         cartItem.getBookName(),
-                        ErrorMessage.OUT_OF_STOCK_MESSAGE);
+                        MessageUtil.get("error.out-of-stock.message"));
             }
 
             // 在庫を減らす（カート追加時点のVERSION値を持つStockエンティティで更新）

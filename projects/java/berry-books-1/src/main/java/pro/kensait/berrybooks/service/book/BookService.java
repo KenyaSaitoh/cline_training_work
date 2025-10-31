@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.ErrorMessage;
+import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.BookDao;
 import pro.kensait.berrybooks.entity.Book;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -28,7 +28,7 @@ public class BookService {
         
         Book book = bookDao.findById(bookId);
         if (book == null) {
-            throw new RuntimeException(ErrorMessage.BOOK_NOT_FOUND + bookId);
+            throw new RuntimeException(MessageUtil.get("error.book.not-found") + bookId);
         }
         return book;
     }
