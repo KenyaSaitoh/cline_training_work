@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.StockDao;
 import pro.kensait.berrybooks.entity.Book;
 import pro.kensait.berrybooks.entity.Stock;
@@ -85,8 +84,6 @@ public class CartBean implements Serializable {
 
     // アクション：選択した書籍をカートから削除
     public String removeSelectedBooks() {
-        logger.info("[ CartBean#removeSelectedBooks ]");
-        
         // 選択された書籍を削除し、合計金額を再計算
         cartSession.getCartItems().removeIf(item -> {
             if (item.isRemove()) {
@@ -139,7 +136,7 @@ public class CartBean implements Serializable {
         // カートに商品が一つも入っていなかった場合は、エラーメッセージを設定
         if (cartSession.getCartItems().isEmpty()) {
             logger.info("[ CartBean#viewCart ] カートに商品なしエラー");
-            globalErrorMessage = MessageUtil.get("error.cart.empty");
+            globalErrorMessage = "カートに商品が一つも入っていません";
         }
 
         return "cartView?faces-redirect=true";

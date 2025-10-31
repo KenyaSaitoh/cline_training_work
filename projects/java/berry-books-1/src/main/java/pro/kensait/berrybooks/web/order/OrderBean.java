@@ -9,7 +9,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.MessageUtil;
+import pro.kensait.berrybooks.common.Const;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.entity.OrderDetail;
 import pro.kensait.berrybooks.entity.OrderTran;
@@ -18,7 +18,6 @@ import pro.kensait.berrybooks.service.order.OrderHistoryTO;
 import pro.kensait.berrybooks.service.order.OrderServiceIF;
 import pro.kensait.berrybooks.service.order.OrderTO;
 import pro.kensait.berrybooks.service.order.OutOfStockException;
-import pro.kensait.berrybooks.util.AddressUtil;
 import pro.kensait.berrybooks.web.cart.CartSession;
 import pro.kensait.berrybooks.web.customer.CustomerBean;
 import jakarta.faces.context.FacesContext;
@@ -84,12 +83,21 @@ public class OrderBean implements Serializable {
         try {
             // 配送先住所の都道府県をチェックする
             if (cartSession.getDeliveryAddress() != null && 
-                    !cartSession.getDeliveryAddress().isBlank() && 
-                    !AddressUtil.startsWithValidPrefecture(cartSession.getDeliveryAddress())) {
-                logger.info("[ OrderBean#placeOrderInternal ] 配送先住所入力エラー");
-                errorMessage = MessageUtil.get("error.delivery-address.invalid-prefecture");
-                setFlashErrorMessage(errorMessage);
-                return "orderError?faces-redirect=true";
+                    !cartSession.getDeliveryAddress().isBlank()) {
+                String deliveryAddr = cartSession.getDeliveryAddress();
+                boolean validPrefecture = false;
+                for (String prefecture : Const.PREFECTURES) {
+                    if (deliveryAddr.startsWith(prefecture)) {
+                        validPrefecture = true;
+                        break;
+                    }
+                }
+                if (!validPrefecture) {
+                    logger.info("[ OrderBean#placeOrderInternal ] 配送先住所入力エラー");
+                    errorMessage = "配送先住所は正しい都道府県名で始まる必要があります";
+                    setFlashErrorMessage(errorMessage);
+                    return "orderError?faces-redirect=true";
+                }
             }
 
             // 配送料金を再計算する（配送先住所が変更されている可能性があるため）
@@ -125,18 +133,18 @@ public class OrderBean implements Serializable {
 
         } catch (OutOfStockException e) {
             logger.error("在庫不足エラー", e);
-            errorMessage = MessageUtil.get("error.out-of-stock") + e.getBookName();
+            errorMessage = "在庫不足: " + e.getBookName();
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
 
         } catch (OptimisticLockException e) {
             logger.error("楽観的ロックエラー", e);
-            errorMessage = MessageUtil.get("error.optimistic-lock");
+            errorMessage = "他のユーザーが同時に注文しました。もう一度お試しください";
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
         } catch (Exception e) {
             logger.error("注文エラー", e);
-            errorMessage = MessageUtil.get("error.order-processing") + e.getMessage();
+            errorMessage = "注文処理中にエラーが発生しました: " + e.getMessage();
             setFlashErrorMessage(errorMessage);
             return "orderError?faces-redirect=true";
         }
@@ -151,7 +159,6 @@ public class OrderBean implements Serializable {
 
     // アクション：注文履歴を取得（方式2）
     public void loadOrderHistory2() {
-        logger.info("[ OrderBean#loadOrderHistory2 ]");
         Integer customerId = getCustomerId();
         orderHistoryList = orderService.getOrderHistory2(customerId);
     }

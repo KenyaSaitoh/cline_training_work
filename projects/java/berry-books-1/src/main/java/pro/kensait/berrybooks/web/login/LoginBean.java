@@ -5,7 +5,6 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.service.customer.CustomerService;
 import pro.kensait.berrybooks.web.customer.CustomerBean;
@@ -52,8 +51,8 @@ public class LoginBean implements Serializable {
             if (customer == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                MessageUtil.get("error.login.failed"),
-                                MessageUtil.get("error.login.invalid-credentials")));
+                                "ログインに失敗しました",
+                                "メールアドレスまたはパスワードが正しくありません"));
                 return null;
             }
 
@@ -70,7 +69,7 @@ public class LoginBean implements Serializable {
             logger.error("Login error", e);
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            MessageUtil.get("error.general"), e.getMessage()));
+                            "エラーが発生しました", e.getMessage()));
             return null;
         }
     }

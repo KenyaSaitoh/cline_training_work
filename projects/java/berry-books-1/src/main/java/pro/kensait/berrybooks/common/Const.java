@@ -1,9 +1,10 @@
-package pro.kensait.berrybooks.util;
+package pro.kensait.berrybooks.common;
 
-// 住所関連のユーティリティクラス
-public final class AddressUtil {
+// 定数クラス
+public final class Const {
     
-    private static final String[] PREFECTURES = {
+    // 都道府県名の定数配列
+    public static final String[] PREFECTURES = {
             "北海道", "青森県", "岩手県", "宮城県", "秋田県", 
             "山形県", "福島県", "茨城県", "栃木県", "群馬県", 
             "埼玉県", "千葉県", "東京都", "神奈川県", "新潟県", 
@@ -15,24 +16,5 @@ public final class AddressUtil {
             "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", 
             "鹿児島県", "沖縄県"
     };
-    
-    // 住所が正しい都道府県名で始まっているかをチェックする
-    public static boolean startsWithValidPrefecture(String address) {
-        if (address == null || address.isBlank()) {
-            return false;
-        }
-        
-        for (String prefecture : PREFECTURES) {
-            if (address.startsWith(prefecture)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    // 都道府県名の配列を取得する
-    public static String[] getPrefectures() {
-        return PREFECTURES.clone();
-    }
 }
 

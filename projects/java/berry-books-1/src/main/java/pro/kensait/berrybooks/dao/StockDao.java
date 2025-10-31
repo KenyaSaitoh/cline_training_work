@@ -32,7 +32,6 @@ public class StockDao {
 
     // DAOメソッド：在庫を更新
     public void update(Stock stock) {
-        logger.info("[ StockDao#update ]");
         em.merge(stock);
     }
 }

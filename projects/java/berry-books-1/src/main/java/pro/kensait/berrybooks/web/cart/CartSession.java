@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import pro.kensait.berrybooks.common.SettlementType;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import jakarta.validation.constraints.NotBlank;
@@ -101,7 +100,18 @@ public class CartSession implements Serializable {
 
     // 決済方法の表示名を取得するヘルパーメソッド
     public String getSettlementTypeName() {
-        return SettlementType.getDisplayNameByCode(settlementType);
+        // 0:銀行振り込み、1:クレジットカード、2:着払い
+        if (settlementType == null) {
+            return "未選択";
+        }
+        if (settlementType == 0) {
+            return "銀行振り込み";
+        } else if (settlementType == 1) {
+            return "クレジットカード";
+        } else if (settlementType == 2) {
+            return "着払い";
+        }
+        return "不明";
     }
 
     @Override

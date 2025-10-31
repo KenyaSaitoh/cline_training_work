@@ -6,10 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.kensait.berrybooks.common.MessageUtil;
-import pro.kensait.berrybooks.dao.BookDao;
-import pro.kensait.berrybooks.dao.OrderDetailDao;
-import pro.kensait.berrybooks.dao.OrderTranDao;
-import pro.kensait.berrybooks.dao.StockDao;
 import pro.kensait.berrybooks.entity.Book;
 import pro.kensait.berrybooks.entity.OrderDetail;
 import pro.kensait.berrybooks.entity.OrderDetailPK;
@@ -17,7 +13,9 @@ import pro.kensait.berrybooks.entity.OrderTran;
 import pro.kensait.berrybooks.entity.Stock;
 import pro.kensait.berrybooks.web.cart.CartItem;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
 // 注文処理と注文履歴取得を行うサービスクラス
@@ -27,17 +25,8 @@ public class OrderService implements OrderServiceIF {
     private static final Logger logger = LoggerFactory.getLogger(
             OrderService.class);
 
-    @Inject
-    private OrderTranDao orderTranDao;
-
-    @Inject
-    private OrderDetailDao orderDetailDao;
-
-    @Inject
-    private BookDao bookDao;
-
-    @Inject
-    private StockDao stockDao;
+    @PersistenceContext(unitName = "bookstorePU")
+    private EntityManager em;
 
     // サービスメソッド：注文エンティティのリストを取得する（方式1）
     @Override
@@ -45,8 +34,17 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#findOrderHistory ]");
 
         // 顧客IDから注文エンティティのリストを取得し、返す
-        List<OrderTran> orderTranList =
-                orderTranDao.findByCustomerId(customerId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findByCustomerId ]");
+        TypedQuery<OrderTran> query = em.createQuery(
+                "SELECT ot FROM OrderTran ot INNER JOIN ot.orderDetails od " +
+                "WHERE ot.customerId = :customerId " +
+                "GROUP BY ot.orderTranId " +
+                "ORDER BY ot.orderDate DESC",
+                OrderTran.class);
+        query.setParameter("customerId", customerId);
+        
+        List<OrderTran> orderTranList = query.getResultList();
         return orderTranList;
     }
 
@@ -56,8 +54,22 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#findOrderHistory2 ]");
 
         // 顧客IDから注文履歴のリストを取得し、返す
-        List<OrderHistoryTO> orderHistoryList =
-                orderTranDao.findOrderHistoryByCustomerId(customerId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findOrderHistoryByCustomerId ]");
+        TypedQuery<OrderHistoryTO> query = em.createQuery(
+                "SELECT new pro.kensait.berrybooks.service.order.OrderHistoryTO(" +
+                "ot.orderDate, ot.orderTranId, od.orderDetailId, " +
+                "b.bookName, p.publisherName, b.price, od.count) " +
+                "FROM OrderTran ot " +
+                "INNER JOIN ot.orderDetails od " +
+                "INNER JOIN od.book b " +
+                "INNER JOIN b.publisher p " +
+                "WHERE ot.customerId = :customerId " +
+                "ORDER BY ot.orderDate DESC, ot.orderTranId DESC",
+                OrderHistoryTO.class);
+        query.setParameter("customerId", customerId);
+        
+        List<OrderHistoryTO> orderHistoryList = query.getResultList();
         return orderHistoryList;
     }
 
@@ -67,8 +79,18 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#findOrderHistory3 ]");
 
         // 顧客IDから注文エンティティのリストを取得し、返す
-        List<OrderTran> orderTranList =
-                orderTranDao.findByCustomerIdWithDetails(customerId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findByCustomerIdWithDetails ]");
+        TypedQuery<OrderTran> query = em.createQuery(
+                "SELECT DISTINCT ot FROM OrderTran ot " +
+                "LEFT JOIN FETCH ot.orderDetails od " +
+                "LEFT JOIN FETCH od.book " +
+                "WHERE ot.customerId = :customerId " +
+                "ORDER BY ot.orderDate DESC, ot.orderTranId DESC",
+                OrderTran.class);
+        query.setParameter("customerId", customerId);
+        
+        List<OrderTran> orderTranList = query.getResultList();
         return orderTranList;
     }
 
@@ -78,7 +100,10 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#getOrderTran ]");
 
         // 注文IDから注文エンティティを取得し、返す
-        OrderTran orderTran = orderTranDao.findById(orderTranId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findById ]");
+        OrderTran orderTran = em.find(OrderTran.class, orderTranId);
+        
         if (orderTran == null) {
             throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
         }
@@ -91,7 +116,15 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#getOrderTranWithDetails ]");
 
         // 注文IDから注文エンティティを明細と共に取得し、返す
-        OrderTran orderTran = orderTranDao.findByIdWithDetails(orderTranId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findByIdWithDetails ] orderTranId=" + orderTranId);
+        
+        // EntityManagerをクリアしてキャッシュをクリア
+        em.clear();
+        
+        // OrderTranを取得（EAGERロードにより明細も自動的に取得される）
+        OrderTran orderTran = em.find(OrderTran.class, orderTranId);
+        
         if (orderTran == null) {
             throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
         }
@@ -104,7 +137,10 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#getOrderDetail ]");
 
         // 複合主キー（注文IDと注文明細ID）から注文明細エンティティを取得し、返す
-        OrderDetail orderDetail = orderDetailDao.findById(pk);
+        // DAOロジックを直接実装
+        logger.info("[ OrderDetailDao#findById ]");
+        OrderDetail orderDetail = em.find(OrderDetail.class, pk);
+        
         if (orderDetail == null) {
             throw new RuntimeException(MessageUtil.get("error.order-detail.not-found") + pk);
         }
@@ -127,7 +163,14 @@ public class OrderService implements OrderServiceIF {
         logger.info("[ OrderService#getOrderDetails ]");
 
         // 注文IDから注文明細エンティティのリストを取得し、返す
-        List<OrderDetail> orderDetailList = orderDetailDao.findByOrderTranId(orderTranId);
+        // DAOロジックを直接実装
+        logger.info("[ OrderDetailDao#findByOrderTranId ]");
+        TypedQuery<OrderDetail> query = em.createQuery(
+                "SELECT od FROM OrderDetail od WHERE od.orderTranId = :orderTranId",
+                OrderDetail.class);
+        query.setParameter("orderTranId", orderTranId);
+        
+        List<OrderDetail> orderDetailList = query.getResultList();
         return orderDetailList;
     }
 
@@ -146,7 +189,9 @@ public class OrderService implements OrderServiceIF {
             stock.setVersion(cartItem.getVersion());  // カート追加時点のVERSION値を使用
             
             // 現在の在庫数を取得（楽観的ロックなし）
-            Stock currentStock = stockDao.findById(cartItem.getBookId());
+            // DAOロジックを直接実装
+            logger.info("[ StockDao#findById ]");
+            Stock currentStock = em.find(Stock.class, cartItem.getBookId());
 
             // 在庫が0未満になる場合は、例外を送出する
             int remaining = currentStock.getQuantity() - cartItem.getCount();
@@ -161,7 +206,9 @@ public class OrderService implements OrderServiceIF {
             stock.setQuantity(remaining);
             // JPAの@Versionアノテーションにより、UPDATE時に自動的にバージョンチェックされる
             // WHERE VERSION = ? 条件が付加され、バージョン不一致の場合はOptimisticLockExceptionがスローされる
-            stockDao.update(stock);
+            // DAOロジックを直接実装
+            logger.info("[ StockDao#update ]");
+            em.merge(stock);
         }
 
         // 新しいOrderTranインスタンスを生成する
@@ -174,7 +221,11 @@ public class OrderService implements OrderServiceIF {
                 orderTO.settlementType());
 
         // 生成したOrderTranインスタンスをpersist操作により永続化する
-        orderTranDao.persist(orderTran);
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#persist ]");
+        em.persist(orderTran);
+        // IDENTITYストラテジーでIDを確実に生成するためにflush
+        em.flush();
 
         // カートアイテム（個々の注文明細）のイテレータを取得する
         List<CartItem> cartItems = orderTO.cartItems();
@@ -183,7 +234,9 @@ public class OrderService implements OrderServiceIF {
         int orderDetailId = 0;
 
         for (CartItem cartItem : cartItems) {
-            Book book = bookDao.findById(cartItem.getBookId());
+            // DAOロジックを直接実装
+            logger.info("[ BookDao#findById ]");
+            Book book = em.find(Book.class, cartItem.getBookId());
 
             // OrderDetailインスタンスの主キー値（注文明細ID）をカウントアップする
             orderDetailId = orderDetailId + 1;
@@ -196,11 +249,22 @@ public class OrderService implements OrderServiceIF {
                     cartItem.getCount());
 
             // OrderDetailインスタンスを保存する
-            orderDetailDao.persist(orderDetail);
+            // DAOロジックを直接実装
+            logger.info("[ OrderDetailDao#persist ]");
+            em.persist(orderDetail);
+            // 即座にINSERTを実行してデータベースに反映
+            em.flush();
         }
 
         // データベースから明細を含めて再取得して返す
         // （永続化した明細をorderDetailsリレーションシップに反映させるため）
-        return orderTranDao.findByIdWithDetails(orderTran.getOrderTranId());
+        // DAOロジックを直接実装
+        logger.info("[ OrderTranDao#findByIdWithDetails ] orderTranId=" + orderTran.getOrderTranId());
+        
+        // EntityManagerをクリアしてキャッシュをクリア
+        em.clear();
+        
+        // OrderTranを取得（EAGERロードにより明細も自動的に取得される）
+        return em.find(OrderTran.class, orderTran.getOrderTranId());
     }
 }

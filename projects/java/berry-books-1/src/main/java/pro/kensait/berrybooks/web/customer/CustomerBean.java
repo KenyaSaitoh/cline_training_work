@@ -16,12 +16,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import pro.kensait.berrybooks.common.MessageUtil;
+import pro.kensait.berrybooks.common.Const;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.service.customer.CustomerService;
 import pro.kensait.berrybooks.service.customer.EmailAlreadyExistsException;
-import pro.kensait.berrybooks.util.AddressUtil;
-
 // 顧客登録画面のバッキングBean
 @Named
 @SessionScoped
@@ -42,7 +40,6 @@ public class CustomerBean implements Serializable {
     private String customerName;
     
     @NotBlank(message = "{error.email.required}")
-    @Email(message = "{error.email.invalid}")
     @Size(max = 100, message = "{error.email.max-length}")
     private String email;
     
@@ -64,10 +61,19 @@ public class CustomerBean implements Serializable {
 
         try {
             // 住所に対する入力チェック（正しい都道府県名で始まっているか）
-            if (address != null && !address.isBlank() && !AddressUtil.startsWithValidPrefecture(address)) {
-                logger.info("[ CustomerBean#register ] 住所入力エラー");
-                addErrorMessage(MessageUtil.get("error.address.invalid-prefecture"));
-                return null;
+            if (address != null && !address.isBlank()) {
+                boolean validPrefecture = false;
+                for (String prefecture : Const.PREFECTURES) {
+                    if (address.startsWith(prefecture)) {
+                        validPrefecture = true;
+                        break;
+                    }
+                }
+                if (!validPrefecture) {
+                    logger.info("[ CustomerBean#register ] 住所入力エラー");
+                    addErrorMessage("配送先住所は正しい都道府県名で始まる必要があります");
+                    return null;
+                }
             }
 
             // Customerエンティティを生成
@@ -84,7 +90,7 @@ public class CustomerBean implements Serializable {
                     newCustomer.setBirthday(birthDate);
                 } catch (Exception e) {
                     logger.warn("Birthday parse error: " + birthday, e);
-                    addErrorMessage(MessageUtil.get("error.birthday.parse-error"));
+                    addErrorMessage("生年月日の形式が正しくありません（例：1990-01-15）");
                     return null;
                 }
             }
@@ -105,7 +111,7 @@ public class CustomerBean implements Serializable {
             return null;
         } catch (Exception e) {
             logger.error("Registration error", e);
-            addErrorMessage(MessageUtil.get("error.registration"));
+            addErrorMessage("登録中にエラーが発生しました");
             return null;
         }
     }

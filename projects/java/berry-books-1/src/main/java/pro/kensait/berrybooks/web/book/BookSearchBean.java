@@ -80,8 +80,6 @@ public class BookSearchBean implements Serializable {
 
     // アクション：書籍を検索する（動的クエリ）
     public String search2() {
-        logger.info("[ BookSearchBean#search2 ] categoryId=" + categoryId + ", keyword=" + keyword);
-        
         // 動的クエリで書籍を検索
         bookList = bookService.searchBookWithCriteria(categoryId, keyword);
         
@@ -97,8 +95,6 @@ public class BookSearchBean implements Serializable {
 
     // アクション：書籍リストを最新の状態に更新する（在庫数を含む）
     public void refreshBookList() {
-        logger.info("[ BookSearchBean#refreshBookList ]");
-        
         // 既存の検索条件を使用して書籍リストを再取得
         if (bookList == null || bookList.isEmpty()) {
             // 初回表示時は全書籍を取得

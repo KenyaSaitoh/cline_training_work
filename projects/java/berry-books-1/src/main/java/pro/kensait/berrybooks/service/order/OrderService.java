@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.dao.BookDao;
 import pro.kensait.berrybooks.dao.OrderDetailDao;
 import pro.kensait.berrybooks.dao.OrderTranDao;
@@ -64,8 +63,6 @@ public class OrderService implements OrderServiceIF {
     // サービスメソッド：注文エンティティのリストを取得する（方式3）
     @Override
     public List<OrderTran> getOrderHistory3(Integer customerId) {
-        logger.info("[ OrderService#findOrderHistory3 ]");
-
         // 顧客IDから注文エンティティのリストを取得し、返す
         List<OrderTran> orderTranList =
                 orderTranDao.findByCustomerIdWithDetails(customerId);
@@ -80,7 +77,7 @@ public class OrderService implements OrderServiceIF {
         // 注文IDから注文エンティティを取得し、返す
         OrderTran orderTran = orderTranDao.findById(orderTranId);
         if (orderTran == null) {
-            throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
+            throw new RuntimeException("OrderTran not found for ID: " + orderTranId);
         }
         return orderTran;
     }
@@ -93,7 +90,7 @@ public class OrderService implements OrderServiceIF {
         // 注文IDから注文エンティティを明細と共に取得し、返す
         OrderTran orderTran = orderTranDao.findByIdWithDetails(orderTranId);
         if (orderTran == null) {
-            throw new RuntimeException(MessageUtil.get("error.order-tran.not-found") + orderTranId);
+            throw new RuntimeException("OrderTran not found for ID: " + orderTranId);
         }
         return orderTran;
     }
@@ -106,7 +103,7 @@ public class OrderService implements OrderServiceIF {
         // 複合主キー（注文IDと注文明細ID）から注文明細エンティティを取得し、返す
         OrderDetail orderDetail = orderDetailDao.findById(pk);
         if (orderDetail == null) {
-            throw new RuntimeException(MessageUtil.get("error.order-detail.not-found") + pk);
+            throw new RuntimeException("OrderDetail not found for PK: " + pk);
         }
         return orderDetail;
     }
@@ -124,8 +121,6 @@ public class OrderService implements OrderServiceIF {
     // サービスメソッド：注文明細エンティティのリストを取得する
     @Override
     public List<OrderDetail> getOrderDetails(Integer orderTranId) {
-        logger.info("[ OrderService#getOrderDetails ]");
-
         // 注文IDから注文明細エンティティのリストを取得し、返す
         List<OrderDetail> orderDetailList = orderDetailDao.findByOrderTranId(orderTranId);
         return orderDetailList;
@@ -139,14 +134,17 @@ public class OrderService implements OrderServiceIF {
         // カートに追加された書籍毎に、在庫の残り個数をチェックする
         for (CartItem cartItem : orderTO.cartItems()) {
 
-            // 楽観的ロック：カート追加時点のVERSION値で在庫エンティティを作成
+            // 楽観的ロック：在庫エンティティを作成
             // （悲観的ロックのfindByIdWithLockは使用しない）
             Stock stock = new Stock();
             stock.setBookId(cartItem.getBookId());
-            stock.setVersion(cartItem.getVersion());  // カート追加時点のVERSION値を使用
             
             // 現在の在庫数を取得（楽観的ロックなし）
             Stock currentStock = stockDao.findById(cartItem.getBookId());
+
+            // 不具合：カート追加時点のVERSIONではなく、現在の最新VERSIONを使用してしまっている
+            // これにより、他のユーザーが在庫を更新してもOptimisticLockExceptionが発生しない
+            stock.setVersion(currentStock.getVersion());  // 本来はcartItem.getVersion()を使うべき
 
             // 在庫が0未満になる場合は、例外を送出する
             int remaining = currentStock.getQuantity() - cartItem.getCount();
@@ -154,13 +152,13 @@ public class OrderService implements OrderServiceIF {
                 throw new OutOfStockException(
                         cartItem.getBookId(),
                         cartItem.getBookName(),
-                        MessageUtil.get("error.out-of-stock.message"));
+                        "在庫不足");
             }
 
-            // 在庫を減らす（カート追加時点のVERSION値を持つStockエンティティで更新）
+            // 在庫を減らす（現在のVERSION値を持つStockエンティティで更新）
+            // 本来はカート追加時点のVERSION値を使うべきだが、現在のVERSIONを使っているため
+            // JPAの@Versionによるチェックが常に成功してしまい、楽観的ロックが機能しない
             stock.setQuantity(remaining);
-            // JPAの@Versionアノテーションにより、UPDATE時に自動的にバージョンチェックされる
-            // WHERE VERSION = ? 条件が付加され、バージョン不一致の場合はOptimisticLockExceptionがスローされる
             stockDao.update(stock);
         }
 

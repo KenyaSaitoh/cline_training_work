@@ -8,10 +8,6 @@ public final class MessageUtil {
     // リソースバンドル（messages.properties）
     private static final ResourceBundle bundle = ResourceBundle.getBundle("messages");
     
-    // インスタンス化を防止
-    private MessageUtil() {
-    }
-    
     // ユーティリティメソッド：プロパティファイルからメッセージを取得
     public static String get(String key) {
         try {
