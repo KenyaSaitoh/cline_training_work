@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.kensait.berrybooks.common.MessageUtil;
+import pro.kensait.berrybooks.dao.StockDao;
 import pro.kensait.berrybooks.entity.Book;
 import pro.kensait.berrybooks.entity.Stock;
 import pro.kensait.berrybooks.service.book.BookService;
@@ -28,6 +29,9 @@ public class CartBean implements Serializable {
     private BookService bookService;
 
     @Inject
+    private StockDao stockDao;
+
+    @Inject
     private CartSession cartSession;
 
     @Inject
@@ -43,7 +47,7 @@ public class CartBean implements Serializable {
         Book book = bookService.getBook(bookId);
         
         // 楽観的ロック用：Stockエンティティから現在のVERSION値を取得
-        Stock stock = bookService.getStock(bookId);
+        Stock stock = stockDao.findById(bookId);
         logger.info("[ CartBean#addBook ] Stock version=" + stock.getVersion());
 
         // 選択された書籍がカートに存在している場合は、注文数と金額を加算する

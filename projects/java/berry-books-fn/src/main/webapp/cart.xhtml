@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>Berry Books - ショッピングカート</title>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h1>ショッピングカート</h1>
+    
+    <h:panelGroup rendered="#{cartBean.cartEmpty}">
+        <p>カートは空です</p>
+    </h:panelGroup>
+    
+    <h:panelGroup rendered="#{not cartBean.cartEmpty}">
+        <h:form>
+            <h:dataTable value="#{cartBean.cartItems}" var="item"
+                         styleClass="dataTable" headerClass="dataTableHeader"
+                         rowClasses="dataTableOddRow,dataTableEvenRow">
+                
+                <h:column>
+                    <f:facet name="header">書籍ID</f:facet>
+                    #{item.bookId}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">書籍名</f:facet>
+                    #{item.bookName}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">単価</f:facet>
+                    <h:outputText value="#{item.price}">
+                        <f:convertNumber type="currency" currencySymbol="¥"/>
+                    </h:outputText>
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">数量</f:facet>
+                    #{item.count}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">小計</f:facet>
+                    <h:outputText value="#{item.subtotal}">
+                        <f:convertNumber type="currency" currencySymbol="¥"/>
+                    </h:outputText>
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">アクション</f:facet>
+                    <h:commandButton value="削除" 
+                                    action="#{cartBean.removeBook(item.bookId)}"/>
+                </h:column>
+            </h:dataTable>
+            
+            <hr/>
+            
+            <h:panelGrid columns="2">
+                <h:outputLabel value="商品合計:"/>
+                <h:outputText value="#{cartBean.totalPrice}">
+                    <f:convertNumber type="currency" currencySymbol="¥"/>
+                </h:outputText>
+                
+                <h:outputLabel value="配送料:"/>
+                <h:outputText value="#{cartBean.deliveryPrice}">
+                    <f:convertNumber type="currency" currencySymbol="¥"/>
+                </h:outputText>
+                
+                <h:outputLabel value="合計:"/>
+                <h:outputText value="#{cartBean.grandTotal}">
+                    <f:convertNumber type="currency" currencySymbol="¥"/>
+                </h:outputText>
+            </h:panelGrid>
+            
+            <hr/>
+            
+            <h:commandButton value="カートをクリア" action="#{cartBean.clearCart}"/>
+            <h:button value="注文に進む" outcome="order"/>
+        </h:form>
+    </h:panelGroup>
+    
+    <hr/>
+    <h:link value="書籍検索に戻る" outcome="bookSearch"/>
+    <h:outputText value=" | "/>
+    <h:link value="トップページ" outcome="index"/>
+</h:body>
+</html>
+
+

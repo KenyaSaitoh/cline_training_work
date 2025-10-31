@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.kensait.berrybooks.common.MessageUtil;
 import pro.kensait.berrybooks.entity.Book;
+import pro.kensait.berrybooks.entity.Stock;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -40,6 +41,20 @@ public class BookService {
             throw new RuntimeException(MessageUtil.get("error.book.not-found") + bookId);
         }
         return book;
+    }
+
+    // サービスメソッド：在庫情報取得（主キー検索）
+    public Stock getStock(Integer bookId) {
+        logger.info("[ BookService#getStock ]");
+        
+        // DAOロジックを直接実装
+        logger.info("[ StockDao#findById ]");
+        Stock stock = em.find(Stock.class, bookId);
+        
+        if (stock == null) {
+            throw new RuntimeException(MessageUtil.get("error.stock.not-found") + bookId);
+        }
+        return stock;
     }
 
     // サービスメソッド：書籍検索（全件検索）

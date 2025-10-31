@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>CustomerOutputPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h2>以下の内容で登録が完了しました</h2>
+    <hr />
+    <table>
+        <tr>
+            <td>顧客名</td>
+            <td>#{customerBean.customer.customerName}</td>
+        </tr>
+        <tr>
+            <td>メールアドレス</td>
+            <td>#{customerBean.customer.email}</td>
+        </tr>
+        <tr>
+            <td>生年月日</td>
+            <td>
+                <h:outputText value="#{customerBean.customer.birthday}">
+                    <f:convertDateTime pattern="yyyy年M月d日" />
+                </h:outputText>
+            </td>
+        </tr>
+        <tr>
+            <td>住所</td>
+            <td>#{customerBean.customer.address}</td>
+        </tr>
+    </table>
+    <br />
+    <h:link id="toSelectLink" value="書籍の選択ページへ" outcome="bookSelect" />
+</h:body>
+</html>
+

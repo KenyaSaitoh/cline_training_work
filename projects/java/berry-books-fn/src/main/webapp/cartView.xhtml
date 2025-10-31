@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>CartViewPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <h:panelGroup rendered="#{not empty cartBean.globalErrorMessage}">
+        <p class="error">#{cartBean.globalErrorMessage}</p>
+        <h:link id="toSelectLink" value="書籍の選択ページへ戻る" outcome="bookSelect" />
+    </h:panelGroup>
+    
+    <h:panelGroup rendered="#{empty cartBean.globalErrorMessage}">
+        <h2>現在の買い物カゴの内容です</h2>
+        <hr />
+        <h:form styleClass="cart">
+            <table class="book-table">
+                <thead>
+                    <tr>
+                        <th>画像</th>
+                        <th>書籍名</th>
+                        <th>注文数</th>
+                        <th>価格</th>
+                        <th>削除</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ui:repeat value="#{cartSession.cartItems}" var="cartItem">
+                        <tr>
+                    <td class="book-image-cell">
+                        <h:graphicImage library="images" 
+                                      name="covers/#{cartItem.bookName.replace(' ', '_')}.jpg"
+                                      alt="#{cartItem.bookName}"
+                                      styleClass="book-thumbnail"
+                                      onError="this.onerror=null; this.src='#{request.contextPath}/jakarta.faces.resource/no-image.jpg?ln=images/covers'" />
+                    </td>
+                            <td>#{cartItem.bookName}</td>
+                            <td>#{cartItem.count}</td>
+                            <td>
+                                <h:outputText value="#{cartItem.price}">
+                                    <f:convertNumber pattern="#,###" />
+                                </h:outputText>
+                            </td>
+                            <td>
+                                <h:selectBooleanCheckbox id="check-#{cartItem.bookId}" 
+                                                        value="#{cartItem.remove}" />
+                            </td>
+                        </tr>
+                    </ui:repeat>
+                </tbody>
+            </table>
+            <div>注文金額合計</div>
+            <div>
+                <h:outputText value="#{cartSession.totalPrice}">
+                    <f:convertNumber pattern="#,###" />
+                </h:outputText>
+            </div>
+            <br />
+            <h:link id="toSelectLink" value="買い物を続ける" outcome="bookSelect" />
+            <br />
+            <h:commandButton id="removeButton" value="選択した書籍をカートから削除する" action="#{cartBean.removeSelectedBooks}" />
+            <br />
+            <h:commandButton id="clearButton" value="買い物カゴをクリアする" action="#{cartBean.clearCart}" />
+            <br />
+            <h:commandButton id="fixButton" value="買い物を終了し注文する" action="#{cartBean.proceedToOrder}" />
+        </h:form>
+        <br />
+        <hr />
+        <h:link value="注文履歴を表示する" outcome="orderHistory" />
+    </h:panelGroup>
+</h:body>
+</html>
+

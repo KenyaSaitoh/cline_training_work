@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>BookSelectPage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{bookSearchBean.refreshBookList}" />
+    </f:metadata>
+    <div class="header-nav">
+        <div class="header-left">
+            <h:link id="viewHistoryLink" value="注文履歴を表示する（方式1）" outcome="orderHistory" styleClass="links" />
+            <h:link id="viewHistoryLink2" value="注文履歴を表示する（方式2）" outcome="orderHistory2" styleClass="links" />
+            <h:link id="viewHistoryLink3" value="注文履歴を表示する（方式3）" outcome="orderHistory3" styleClass="links" />
+        </div>
+        <div class="header-right">
+            <h:link id="toSearchLink" value="書籍の検索ページへ" outcome="bookSearch" styleClass="search-link" />
+        </div>
+    </div>
+    <hr />
+    <h2>書籍を買い物カゴに入れてください</h2>
+    <hr />
+    <h:form styleClass="book">
+        <table id="book-table" class="book-table">
+            <thead>
+                <tr>
+                    <th>画像</th>
+                    <th>書籍名</th>
+                    <th>著者</th>
+                    <th>カテゴリ</th>
+                    <th>出版社</th>
+                    <th>価格</th>
+                    <th>在庫数</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <ui:repeat value="#{bookSearchBean.bookList}" var="book">
+                    <tr>
+                        <td class="book-image-cell">
+                            <h:graphicImage library="images" 
+                                          name="covers/#{book.bookName.replace(' ', '_')}.jpg"
+                                          alt="#{book.bookName}"
+                                          styleClass="book-thumbnail"
+                                          onError="this.onerror=null; this.src='#{request.contextPath}/jakarta.faces.resource/no-image.jpg?ln=images/covers'" />
+                        </td>
+                        <td>#{book.bookName}</td>
+                        <td>#{book.author}</td>
+                        <td>#{book.category.categoryName}</td>
+                        <td>#{book.publisher.publisherName}</td>
+                        <td>
+                            <h:outputText value="#{book.price}">
+                                <f:convertNumber pattern="#,###" />
+                            </h:outputText>
+                        </td>
+                        <td>#{book.quantity}</td>
+                        <td>
+                            <h:commandButton id="button-#{book.bookId}" 
+                                           value="買い物カゴへ" 
+                                           action="#{cartBean.addBook(book.bookId, 1)}"
+                                           styleClass="cart-button"
+                                           rendered="#{book.quantity > 0}" />
+                            <h:outputText value="入荷待ち" 
+                                         styleClass="out-of-stock"
+                                         rendered="#{book.quantity == 0}" />
+                        </td>
+                    </tr>
+                </ui:repeat>
+            </tbody>
+        </table>
+        <h:link id="viewCartLink" value="現在の買い物カゴの内容を表示する" outcome="cartView" />
+        <br />
+        <h:commandButton id="logoutButton" value="ログアウト" action="#{loginBean.processLogout}" />
+    </h:form>
+</h:body>
+</html>
+

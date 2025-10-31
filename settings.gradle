@@ -10,8 +10,10 @@ include 'projects:java:jsf-person'
 // Berry Books プロジェクト
 include 'projects:java:berry-books-1'
 include 'projects:java:berry-books-2'
+include 'projects:java:berry-books-fn'
 include 'projects:java:berry-books-rest'
 include 'projects:java:berry-books-swing'
 
 // Struts系プロジェクト
 include 'projects:java:struts-person'
+include 'projects:java:struts-to-jsf-person'
