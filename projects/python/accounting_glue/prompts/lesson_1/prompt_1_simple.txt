@@ -1,0 +1,30 @@
+===============================================
+ETL実装プロンプト【低：簡易版】
+===============================================
+
+上流システム（売上・人事・在庫）から会計システムへのデータ統合ETL処理を、Python/PySparkで実装してください。
+
+## 要件
+
+### 入力
+- `test_data/sales/sales_txn_export.csv`
+- `test_data/hr/hr_employee_org_export.csv`
+- `test_data/inventory/inv_movement_export.csv`
+
+### 出力
+- `output/accounting_txn_interface.csv`（統合ファイル）
+
+### 仕様参照
+- 入出力DDL: `ddl/source/`と`ddl/erp/`
+- 変換仕様: `spec/detail_design/`配下の各ファイル
+
+## 実装要件
+
+1. **共通変換ロジック**（`src/etl/`）を環境非依存で実装
+2. 各システムごとにTransformerクラスを作成
+3. Python標準版（`src/local/python_native/`）とPySpark版（`src/local/pyspark/`）の両対応
+4. バリデーション、エラーハンドリング、ログ出力を実装
+5. 単体テスト・統合テストを作成
+
+詳細は仕様書を参照してください。
+
