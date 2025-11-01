@@ -6,15 +6,15 @@ import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import pro.kensait.berrybooks.dao.StockDao;
 import pro.kensait.berrybooks.entity.Book;
 import pro.kensait.berrybooks.entity.Stock;
 import pro.kensait.berrybooks.service.book.BookService;
 import pro.kensait.berrybooks.service.delivery.DeliveryFeeService;
 import pro.kensait.berrybooks.web.customer.CustomerBean;
-import jakarta.enterprise.context.SessionScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 // ショッピングカート操作のバッキングBean
 @Named
@@ -120,7 +120,6 @@ public class CartBean implements Serializable {
         }
 
         // 配送料金を計算する
-        // ※通常800円、沖縄県は1700円、5000円以上は送料無料
         BigDecimal deliveryPrice = deliveryFeeService.calculateDeliveryFee(
                 cartSession.getDeliveryAddress(), 
                 cartSession.getTotalPrice());

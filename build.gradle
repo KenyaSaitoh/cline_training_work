@@ -46,7 +46,7 @@ subprojects {
         implementation files(rootProject.file('hsqldb/lib/hsqldb.jar'))
         
         // Struts 1.3.10 - Strutsプロジェクト用（条件付き - TomEE 8用）
-        if (project.name == "struts-person") {
+        if (project.name == "struts-person" || project.name == "struts-to-jsf-person") {
             implementation "org.apache.struts:struts-core:1.3.10"
             implementation "org.apache.struts:struts-taglib:1.3.10"
             implementation "commons-beanutils:commons-beanutils:1.9.4"
@@ -183,8 +183,8 @@ subprojects {
         useJUnitPlatform()
     }
 
-    // TomEE 8専用タスク（struts-personプロジェクトのみ）
-    if (project.name == "struts-person") {
+    // TomEE 8専用タスク（Strutsプロジェクト）
+    if (project.name == "struts-person" || project.name == "struts-to-jsf-person") {
         // クリーンなserver.xmlをテンプレートから初期化する
         task initTomee8Config doLast {
             def templateFile = rootProject.file("${rootProject.conf.tomee8.home}/conf/server.xml.template")

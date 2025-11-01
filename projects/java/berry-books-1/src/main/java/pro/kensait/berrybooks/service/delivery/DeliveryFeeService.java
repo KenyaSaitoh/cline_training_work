@@ -14,11 +14,11 @@ public class DeliveryFeeService {
 
     // 配送料金の定数
     private static final BigDecimal STANDARD_DELIVERY_FEE = new BigDecimal("800");
-    private static final BigDecimal OKINAWA_DELIVERY_FEE = new BigDecimal("1700");
+    private static final BigDecimal OKINAWA_DELIVERY_FEE = new BigDecimal("1600");
     private static final BigDecimal FREE_DELIVERY_THRESHOLD = new BigDecimal("5000");
     private static final BigDecimal ZERO = BigDecimal.ZERO;
 
-    // 配送料金を計算する（通常800円、沖縄県1700円、5000円以上は送料無料）
+    // 配送料金を計算する（通常800円、沖縄県1600円、5000円以上は送料無料）
     public BigDecimal calculateDeliveryFee(String deliveryAddress, BigDecimal totalPrice) {
         logger.info("[ DeliveryFeeService#calculateDeliveryFee ] address={}, totalPrice={}", 
                 deliveryAddress, totalPrice);
@@ -27,7 +27,7 @@ public class DeliveryFeeService {
         if (totalPrice.compareTo(FREE_DELIVERY_THRESHOLD) < 0) {
             // 5000円未満の場合
             
-            // 配送先住所が沖縄県の場合は1700円
+            // 配送先住所が沖縄県の場合は1600円
             if (deliveryAddress != null && deliveryAddress.startsWith("沖縄県")) {
                 logger.info("[ DeliveryFeeService ] 沖縄県への配送料金: {}", OKINAWA_DELIVERY_FEE);
                 return OKINAWA_DELIVERY_FEE;

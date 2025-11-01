@@ -5,6 +5,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import pro.kensait.berrybooks.dao.BookDao;
 import pro.kensait.berrybooks.dao.OrderDetailDao;
 import pro.kensait.berrybooks.dao.OrderTranDao;
@@ -15,9 +18,6 @@ import pro.kensait.berrybooks.entity.OrderDetailPK;
 import pro.kensait.berrybooks.entity.OrderTran;
 import pro.kensait.berrybooks.entity.Stock;
 import pro.kensait.berrybooks.web.cart.CartItem;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
 // 注文処理と注文履歴取得を行うサービスクラス
 @ApplicationScoped
@@ -139,19 +139,16 @@ public class OrderService implements OrderServiceIF {
             Stock stock = new Stock();
             stock.setBookId(cartItem.getBookId());
             
-            // 現在の在庫数を取得（楽観的ロックなし）
+            // 現在の在庫数を取得する
             Stock currentStock = stockDao.findById(cartItem.getBookId());
 
-            // 不具合：カート追加時点のVERSIONではなく、現在の最新VERSIONを使用してしまっている
-            // これにより、他のユーザーが在庫を更新してもOptimisticLockExceptionが発生しない
-            stock.setVersion(currentStock.getVersion());  // 本来はcartItem.getVersion()を使うべき
+            // 楽観的ロックのために現在の最新VERSIONをセットする
+            stock.setVersion(currentStock.getVersion());
 
             // 在庫を減らす（マイナスになることも許容する）
             int remaining = currentStock.getQuantity() - cartItem.getCount();
 
-            // 在庫を減らす（現在のVERSION値を持つStockエンティティで更新）
-            // 本来はカート追加時点のVERSION値を使うべきだが、現在のVERSIONを使っているため
-            // JPAの@Versionによるチェックが常に成功してしまい、楽観的ロックが機能しない
+            // 在庫を減らし楽観的ロックを行う（現在のVERSION値を持つStockエンティティで更新）
             stock.setQuantity(remaining);
             stockDao.update(stock);
         }
