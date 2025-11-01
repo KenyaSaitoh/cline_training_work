@@ -10,7 +10,38 @@ berry-books-1プロジェクトに在庫チェック機能を追加してくだ�
 
 ---
 
-### 1. OrderServiceへの在庫チェックロジック追加
+### 1. OutOfStockException例外クラスの作成
+
+#### 対象ファイル
+- **新規作成:** `src/main/java/pro/kensait/berrybooks/service/order/OutOfStockException.java`
+
+#### クラス仕様
+
+**パッケージ：** `pro.kensait.berrybooks.service.order`
+
+**継承元：** `RuntimeException`
+
+**フィールド：**
+- `bookId`（Integer）：書籍ID
+- `bookName`（String）：書籍名
+
+**コンストラクタ：**
+- デフォルトコンストラクタ
+- メッセージ付きコンストラクタ
+- メッセージと原因例外付きコンストラクタ
+- 原因例外付きコンストラクタ
+- **主要コンストラクタ**：`OutOfStockException(Integer bookId, String bookName, String message)`
+  - 書籍情報とエラーメッセージを受け取る
+  - 親クラスのコンストラクタにメッセージを渡す
+  - bookIdとbookNameフィールドに値を設定
+
+**getterメソッド：**
+- `getBookId()`：書籍IDを返す
+- `getBookName()`：書籍名を返す
+
+---
+
+### 2. OrderServiceへの在庫チェックロジック追加
 
 #### 対象ファイル
 - `src/main/java/pro/kensait/berrybooks/service/order/OrderService.java`
@@ -25,9 +56,8 @@ berry-books-1プロジェクトに在庫チェック機能を追加してくだ�
 #### 詳細実装手順
 
 **ステップ1: 在庫情報取得（既存コード：143行目）**
-```java
-Stock currentStock = stockDao.findById(cartItem.getBookId());
-```
+- `stockDao.findById()`で現在の在庫情報を取得
+- 既存のコードをそのまま使用
 
 **ステップ2: 在庫チェックロジックの追加（143行目と148行目の間に挿入）**
 - 在庫数と注文数を比較
@@ -41,7 +71,7 @@ Stock currentStock = stockDao.findById(cartItem.getBookId());
 
 **例外クラス：**
 - パッケージ：`pro.kensait.berrybooks.service.order.OutOfStockException`
-- 既に実装済み（import文の追加が必要）
+- 上記で新規作成したクラスを使用（import文の追加が必要）
 
 **ログ出力：**
 - 在庫不足検出時にWARNレベルでログ出力
@@ -53,7 +83,7 @@ Stock currentStock = stockDao.findById(cartItem.getBookId());
 
 ---
 
-### 2. OrderBeanでの例外ハンドリング追加
+### 3. OrderBeanでの例外ハンドリング追加
 
 #### 対象ファイル
 - `src/main/java/pro/kensait/berrybooks/web/order/OrderBean.java`
@@ -73,32 +103,17 @@ Stock currentStock = stockDao.findById(cartItem.getBookId());
 - より具体的な例外を先にcatchする
 
 **実装内容：**
-```java
-catch (OutOfStockException e) {
-    // ログ出力
-    logger.warn("在庫不足エラー: bookId={}, bookName={}", 
-                e.getBookId(), e.getBookName(), e);
-    
-    // エラーメッセージを構築
-    String errorMessage = e.getMessage();
-    
-    // Flash Scopeにエラーメッセージを設定
-    FacesContext context = FacesContext.getCurrentInstance();
-    context.getExternalContext().getFlash().put("errorMessage", errorMessage);
-    
-    // orderError.xhtmlへリダイレクト
-    return "orderError?faces-redirect=true";
-}
-```
+- WARNレベルでログ出力（書籍IDと書籍名を含める）
+- 例外からエラーメッセージを取得（`e.getMessage()`）
+- FacesContextのFlash Scopeにエラーメッセージを設定
+- `orderError.xhtml`へリダイレクト（`faces-redirect=true`を指定）
 
 **import文の追加：**
-```java
-import pro.kensait.berrybooks.service.order.OutOfStockException;
-```
+- `pro.kensait.berrybooks.service.order.OutOfStockException`
 
 ---
 
-### 3. エラーページの確認・作成
+### 4. エラーページの確認・作成
 
 #### エラーページ
 - `src/main/webapp/orderError.xhtml`
@@ -111,39 +126,23 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 #### orderError.xhtmlの実装（存在しない場合）
 
 **基本構造：**
-```xml
-<?xml version='1.0' encoding='UTF-8' ?>
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
-<h:head>
-    <title>注文エラー - Berry Books</title>
-    <h:outputStylesheet library="css" name="style.css"/>
-</h:head>
-<h:body>
-    <h1>注文処理でエラーが発生しました</h1>
-    
-    <!-- Flash Scopeからエラーメッセージを取得 -->
-    <div class="error-message">
-        #{flash.errorMessage}
-    </div>
-    
-    <h:form>
-        <h:commandButton value="カートに戻る" 
-                         action="cartView?faces-redirect=true" />
-    </h:form>
-</h:body>
-</html>
-```
+- XML宣言とDOCTYPE宣言
+- JSF名前空間の宣言（`xmlns:h`、`xmlns:f`）
+- タイトル：「注文エラー - Berry Books」
+- CSSファイルのインクルード（`style.css`）
+
+**表示内容：**
+- 見出し：「注文処理でエラーが発生しました」
+- エラーメッセージ表示エリア：`#{flash.errorMessage}`でFlash Scopeから取得
+- カートに戻るボタン：`cartView?faces-redirect=true`へ遷移
 
 **CSSスタイリング（オプション）：**
-- `.error-message`クラスにスタイルを適用
+- エラーメッセージ表示エリアにスタイルを適用
 - 赤色、太字、適切な余白など
 
 ---
 
-### 4. トランザクションとロールバックの確認
+### 5. トランザクションとロールバックの確認
 
 #### 確認項目
 - `OrderService.orderBooks()`メソッドに`@Transactional`が付与されているか（24行目で確認済み）
@@ -156,7 +155,7 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 
 ---
 
-### 5. 楽観的ロックとの併用
+### 6. 楽観的ロックとの併用
 
 #### 実装上の注意点
 - 在庫チェックは、楽観的ロック処理の一部として動作
@@ -175,7 +174,7 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 
 ---
 
-### 6. ログ出力
+### 7. ログ出力
 
 #### OrderServiceでのログ
 - 在庫不足検出時：WARNレベル
@@ -187,7 +186,7 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 
 ---
 
-### 7. テスト観点
+### 8. テスト観点
 
 #### 動作確認項目
 1. **在庫充分な場合**
@@ -220,10 +219,12 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 - セクション：「8.3.3 在庫チェックロジック詳細」（791-829行目）
 - セクション：「14.2.1 OutOfStockException」（1395-1412行目）
 
-### 例外クラス（既存）
+### 例外クラス（新規作成）
 - クラス：`pro.kensait.berrybooks.service.order.OutOfStockException`
+- 継承元：RuntimeException
 - フィールド：`bookId`（Integer）、`bookName`（String）
-- コンストラクタ：`OutOfStockException(Integer bookId, String bookName, String message)`
+- 主要コンストラクタ：`OutOfStockException(Integer bookId, String bookName, String message)`
+- getterメソッド：`getBookId()`、`getBookName()`
 
 ### エラーメッセージ仕様
 - メッセージキー：`error.out-of-stock`
@@ -234,10 +235,11 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 
 ## 実装順序の推奨
 
-1. OrderServiceの在庫チェックロジック追加（最優先）
-2. OrderBeanの例外ハンドリング追加
-3. orderError.xhtmlの確認・作成（必要に応じて）
-4. 動作確認とテスト
+1. OutOfStockException例外クラスの作成（最優先）
+2. OrderServiceの在庫チェックロジック追加
+3. OrderBeanの例外ハンドリング追加
+4. orderError.xhtmlの確認・作成（必要に応じて）
+5. 動作確認とテスト
 
 ---
 
@@ -248,4 +250,3 @@ import pro.kensait.berrybooks.service.order.OutOfStockException;
 - 楽観的ロックの実装も維持すること
 - トランザクション境界を変更しないこと
 - ログフォーマットは既存のスタイルに合わせること
-

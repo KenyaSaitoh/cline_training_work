@@ -9,6 +9,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.persistence.OptimisticLockException;
 import pro.kensait.berrybooks.common.Const;
 import pro.kensait.berrybooks.entity.Customer;
 import pro.kensait.berrybooks.entity.OrderDetail;
@@ -17,14 +22,8 @@ import pro.kensait.berrybooks.service.delivery.DeliveryFeeService;
 import pro.kensait.berrybooks.service.order.OrderHistoryTO;
 import pro.kensait.berrybooks.service.order.OrderServiceIF;
 import pro.kensait.berrybooks.service.order.OrderTO;
-import pro.kensait.berrybooks.service.order.OutOfStockException;
 import pro.kensait.berrybooks.web.cart.CartSession;
 import pro.kensait.berrybooks.web.customer.CustomerBean;
-import jakarta.faces.context.FacesContext;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.persistence.OptimisticLockException;
 
 // 注文処理と注文履歴表示のバッキングBean
 @Named
@@ -130,12 +129,6 @@ public class OrderBean implements Serializable {
 
             // 注文IDをURLパラメータとして渡す
             return "orderSuccess?faces-redirect=true&orderTranId=" + orderTran.getOrderTranId();
-
-        } catch (OutOfStockException e) {
-            logger.error("在庫不足エラー", e);
-            errorMessage = "在庫不足: " + e.getBookName();
-            setFlashErrorMessage(errorMessage);
-            return "orderError?faces-redirect=true";
 
         } catch (OptimisticLockException e) {
             logger.error("楽観的ロックエラー", e);

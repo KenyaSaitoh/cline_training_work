@@ -1,0 +1,358 @@
+===============================================
+大規模リファクタリングプロンプト【高：詳細版】
+===============================================
+
+berry-books-2プロジェクトをアーキテクチャガイドラインに準拠するように大規模リファクタリングしてください。
+
+## 現状分析
+
+### 現在のアーキテクチャ上の問題
+
+**問題1: レイヤー分離の不足**
+- ServiceクラスがEntityManagerを直接保持（`@PersistenceContext`）
+- データアクセスロジックとビジネスロジックが同一クラスに混在
+- DAOレイヤーが存在しない
+
+**問題2: 責務の不明確**
+- `BookService.java`（29-30行目）：`@PersistenceContext`でEntityManagerを注入
+- `BookService.java`（36-43行目）：`em.find()`を直接呼び出し
+- `BookService.java`（64-75行目）：JPQLクエリを直接実装
+
+**問題3: ログ出力の混乱**
+- `BookService.java`（37行目）：`logger.info("[ BookDao#findById ]")`
+- Serviceクラス内でDAOのログを出力（存在しないDAOのログ）
+
+**違反しているガイドライン：**
+- アーキテクチャガイドライン 3.1「レイヤーアーキテクチャ」
+- アーキテクチャガイドライン 3.3「責務の分離」
+- アーキテクチャガイドライン 4.3.3「ビジネスロジック層（Service）」
+
+---
+
+## リファクタリング計画
+
+### フェーズ1: DAOレイヤーの作成
+
+#### 1.1 パッケージ構成
+
+**新規作成するパッケージ：**
+- `pro.kensait.berrybooks.dao`
+
+**新規作成するDAOクラス一覧：**
+| DAOクラス | 対応Entity | 主要メソッド |
+|----------|-----------|------------|
+| `CategoryDao` | `Category` | findById, findAll |
+| `PublisherDao` | `Publisher` | findById, findAll |
+| `BookDao` | `Book` | findById, findAll, query系メソッド |
+| `StockDao` | `Stock` | findById, update, findByIdWithLock |
+| `CustomerDao` | `Customer` | findById, findByEmail, persist |
+| `OrderTranDao` | `OrderTran` | findById, findByCustomerId, persist |
+| `OrderDetailDao` | `OrderDetail` | findById, findByOrderTranId, persist |
+
+#### 1.2 DAOクラスの設計指針
+
+**クラス構造：**
+- `@ApplicationScoped`を付与（ステートレス、シングルトン）
+- `@PersistenceContext(unitName = "bookstorePU")`でEntityManager注入
+- private static final Loggerを定義
+- Serializableは実装不要（ApplicationScopedのため）
+
+**メソッド設計：**
+- **findById(Integer id)**: 主キー検索
+- **findAll()**: 全件検索
+- **persist(Entity entity)**: 新規登録
+- **update(Entity entity)**: 更新（merge）
+- **remove(Entity entity)**: 削除
+- **カスタム検索メソッド**: JPQLまたはCriteria APIで実装
+
+**ログ出力：**
+- 全てのpublicメソッドの開始時にINFOログ
+- フォーマット：`logger.info("[ DaoClassName#methodName ]")`
+- 例：`logger.info("[ BookDao#findById ]")`
+
+**例外ハンドリング：**
+- DAOでは例外をそのままスロー（catchしない）
+- RuntimeExceptionはService層でハンドリング
+
+#### 1.3 具体的なDAO作成手順
+
+**ステップ1: CategoryDaoの作成（最もシンプル）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/CategoryDao.java`
+- メソッド：`findById(Integer id)`, `findAll()`
+- JPQLクエリ：`"SELECT c FROM Category c"`
+
+**ステップ2: PublisherDaoの作成（CategoryDaoと同様）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/PublisherDao.java`
+- メソッド：`findById(Integer id)`, `findAll()`
+
+**ステップ3: BookDaoの作成（複数の検索メソッド）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/BookDao.java`
+- 基本メソッド：`findById`, `findAll`
+- カスタム検索メソッド：
+  - `query(Integer categoryId, String keyword)` - カテゴリとキーワードで検索
+  - `queryByCategory(Integer categoryId)` - カテゴリで検索
+  - `queryByKeyword(String keyword)` - キーワードで検索
+  - `queryByCriteria(Integer categoryId, String keyword)` - Criteria API版
+- Criteria APIの使用：動的クエリ生成が必要な場合
+
+**ステップ4: StockDaoの作成（楽観的ロック対応）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/StockDao.java`
+- メソッド：`findById`, `update`, `findByIdWithLock`
+- `findByIdWithLock`: 悲観的ロック用（LockModeType.PESSIMISTIC_WRITE）
+
+**ステップ5: CustomerDaoの作成（カスタム検索含む）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/CustomerDao.java`
+- メソッド：`findById`, `findByEmail`, `persist`
+- `findByEmail`: メールアドレスで顧客を検索（重複チェック用）
+
+**ステップ6: OrderTranDaoの作成（複雑な検索）**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/OrderTranDao.java`
+- メソッド：
+  - `findById(Integer id)` - 主キー検索
+  - `findByCustomerId(Integer customerId)` - 顧客の注文一覧
+  - `findByIdWithDetails(Integer id)` - 明細を含めて取得（JOIN FETCH）
+  - `findByCustomerIdWithDetails(Integer customerId)` - 顧客の注文を明細含めて取得
+  - `findOrderHistoryByCustomerId(Integer customerId)` - 注文履歴DTO返却
+  - `persist(OrderTran orderTran)` - 新規登録
+
+**ステップ7: OrderDetailDaoの作成**
+- ファイル：`src/main/java/pro/kensait/berrybooks/dao/OrderDetailDao.java`
+- メソッド：
+  - `findById(OrderDetailPK pk)` - 複合主キー検索
+  - `findByOrderTranId(Integer orderTranId)` - 注文IDで明細一覧取得
+  - `persist(OrderDetail orderDetail)` - 新規登録
+
+---
+
+### フェーズ2: Serviceクラスのリファクタリング
+
+#### 2.1 BookServiceのリファクタリング
+
+**対象ファイル：** `src/main/java/pro/kensait/berrybooks/service/book/BookService.java`
+
+**削除する要素：**
+- 29-30行目：`@PersistenceContext private EntityManager em;`
+- 全てのimport文：`jakarta.persistence.*`（EntityManager、TypedQuery、Criteria系）
+- 37行目：`logger.info("[ BookDao#findById ]")` - DAOのログ出力
+
+**追加する要素：**
+- `@Inject private BookDao bookDao;`
+- `@Inject private StockDao stockDao;`（在庫操作が必要な場合）
+
+**メソッドごとのリファクタリング：**
+
+**getBook(Integer bookId)メソッド（33-44行目）：**
+- 変更前：`em.find(Book.class, bookId)`
+- 変更後：`bookDao.findById(bookId)`
+- DAOログ削除：37行目の`logger.info("[ BookDao#findById ]")`を削除
+
+**getStock(Integer bookId)メソッド（46-58行目）：**
+- 変更前：`em.find(Stock.class, bookId)`
+- 変更後：`stockDao.findById(bookId)`
+- DAOログ削除：51行目を削除
+
+**getBooksAll()メソッド（60-76行目）：**
+- 変更前：TypedQuery生成とem.refresh()
+- 変更後：`bookDao.findAll()`
+- 注意：em.refresh()の処理をDAOに移すか判断が必要
+
+**searchBook(Integer categoryId, String keyword)メソッド（78-99行目）：**
+- 変更前：JPQLクエリ生成
+- 変更後：`bookDao.query(categoryId, keyword)`
+- toLikeWord()メソッドはDAOに移動
+
+**searchBook(Integer categoryId)メソッド（101-120行目）：**
+- 変更前：JPQLクエリ生成
+- 変更後：`bookDao.queryByCategory(categoryId)`
+
+**searchBook(String keyword)メソッド：**
+- 変更前：JPQLクエリ生成
+- 変更後：`bookDao.queryByKeyword(keyword)`
+
+**searchBookByCriteria(Integer categoryId, String keyword)メソッド：**
+- 変更前：Criteria API実装
+- 変更後：`bookDao.queryByCriteria(categoryId, keyword)`
+
+#### 2.2 CategoryServiceのリファクタリング
+
+**対象ファイル：** `src/main/java/pro/kensait/berrybooks/service/category/CategoryService.java`
+
+**リファクタリング内容：**
+- `@PersistenceContext private EntityManager em;` を削除
+- `@Inject private CategoryDao categoryDao;` を追加
+- データアクセスロジックをDAO呼び出しに置き換え
+
+#### 2.3 CustomerServiceのリファクタリング
+
+**対象ファイル：** `src/main/java/pro/kensait/berrybooks/service/customer/CustomerService.java`
+
+**リファクタリング内容：**
+- `@Inject private CustomerDao customerDao;` を追加
+- `findByEmail()`等のデータアクセスをDAO呼び出しに置き換え
+- ビジネス検証（重複チェック等）は残す
+
+#### 2.4 OrderServiceのリファクタリング
+
+**対象ファイル：** `src/main/java/pro/kensait/berrybooks/service/order/OrderService.java`
+
+**リファクタリング内容：**
+- `@Inject private OrderTranDao orderTranDao;` を追加
+- `@Inject private OrderDetailDao orderDetailDao;` を追加
+- `@Inject private BookDao bookDao;` を追加
+- `@Inject private StockDao stockDao;` を追加
+- 複雑なデータアクセスロジックをDAO呼び出しに置き換え
+
+---
+
+### フェーズ3: ログ出力の整理
+
+#### 3.1 DAOクラスでのログ出力
+
+各DAOクラスで：
+- private static final Logger定義
+- 全publicメソッドの開始時にINFOログ出力
+- フォーマット：`logger.info("[ DaoClassName#methodName ]")`
+
+#### 3.2 Serviceクラスでのログ出力整理
+
+各Serviceクラスで：
+- DAOのログ出力を削除（例：`logger.info("[ BookDao#findById ]")`）
+- ServiceのログはServiceクラスで出力（変更なし）
+
+---
+
+### フェーズ4: 動作確認とテスト
+
+#### 4.1 動作確認項目
+
+**書籍検索機能：**
+- 全件検索が正常に動作すること
+- カテゴリ検索が正常に動作すること
+- キーワード検索が正常に動作すること
+- Criteria API検索が正常に動作すること
+
+**顧客登録機能：**
+- 新規顧客登録が正常に動作すること
+- メールアドレス重複チェックが機能すること
+
+**注文機能：**
+- 注文登録が正常に動作すること
+- 在庫更新が正常に動作すること
+- 楽観的ロックが機能すること
+
+**注文履歴表示：**
+- 注文履歴が正常に表示されること
+- 明細情報が正常に表示されること
+
+#### 4.2 ログ確認
+
+リファクタリング後のログ出力を確認：
+- Serviceログ：`[ ServiceClassName#methodName ]`
+- DAOログ：`[ DaoClassName#methodName ]`
+- ログが適切な順序で出力されること
+
+---
+
+## 実装順序の推奨
+
+### ステップ1: 単純なDAOから作成（1-2時間）
+1. CategoryDaoを作成
+2. CategoryServiceをリファクタリング
+3. 動作確認
+
+### ステップ2: 他のDAOを順次作成（3-4時間）
+4. PublisherDaoを作成
+5. BookDaoを作成
+6. StockDaoを作成
+7. BookServiceをリファクタリング
+8. 動作確認
+
+### ステップ3: 顧客関連（1-2時間）
+9. CustomerDaoを作成
+10. CustomerServiceをリファクタリング
+11. 動作確認
+
+### ステップ4: 注文関連（最も複雑、3-4時間）
+12. OrderTranDaoを作成
+13. OrderDetailDaoを作成
+14. OrderServiceをリファクタリング
+15. 動作確認
+
+### ステップ5: 統合テスト（1-2時間）
+16. 全機能の動作確認
+17. ログ出力の確認
+18. パフォーマンステスト
+
+**合計推定時間：** 8-14時間
+
+---
+
+## 注意事項
+
+### 互換性の維持
+- Serviceクラスのpublicメソッドのシグネチャは変更しない
+- Bean（web層）からの呼び出しは影響を受けない
+- 内部実装のみをリファクタリング
+
+### トランザクション管理
+- トランザクション境界はServiceレイヤーのまま（`@Transactional`）
+- DAOクラスには`@Transactional`を付与しない
+- EntityManagerはトランザクション内で動作
+
+### エラーハンドリング
+- DAOで発生した例外は基本的にそのままスロー
+- Service層で適切にハンドリング
+- ビジネス例外とシステム例外を区別
+
+### パフォーマンス
+- N+1問題に注意（JOIN FETCHを活用）
+- em.refresh()の使用は慎重に判断
+- 必要に応じてキャッシュ戦略を検討
+
+---
+
+## 参考情報
+
+### アーキテクチャガイドライン参照箇所
+
+**ファイル：** `spec/アーキテクチャガイドライン/アーキテクチャガイドライン.md`
+
+**主要セクション：**
+- セクション3.1「レイヤーアーキテクチャ」（19-41行目）
+- セクション3.2「依存関係の原則」（43-47行目）
+- セクション3.3「責務の分離」（49-58行目）
+- セクション4.3.3「ビジネスロジック層（Service）」（178-217行目）
+- セクション4.3.4「データアクセス層（DAO）」（219-252行目）
+- セクション11.3「ログ出力方針」（752-792行目）
+
+### 設計パターン
+- Repository パターン（DAOはRepositoryパターンの実装）
+- Dependency Injection（@Injectによる依存性注入）
+- Layered Architecture（レイヤーアーキテクチャ）
+
+---
+
+## 成果物チェックリスト
+
+### DAOクラス
+- [ ] CategoryDao作成完了
+- [ ] PublisherDao作成完了
+- [ ] BookDao作成完了
+- [ ] StockDao作成完了
+- [ ] CustomerDao作成完了
+- [ ] OrderTranDao作成完了
+- [ ] OrderDetailDao作成完了
+
+### Serviceクラスのリファクタリング
+- [ ] BookServiceリファクタリング完了
+- [ ] CategoryServiceリファクタリング完了
+- [ ] CustomerServiceリファクタリング完了
+- [ ] OrderServiceリファクタリング完了
+
+### 品質確認
+- [ ] 全機能の動作確認完了
+- [ ] ログ出力が適切
+- [ ] 例外ハンドリングが適切
+- [ ] パフォーマンスに問題なし
+- [ ] アーキテクチャガイドライン準拠
+

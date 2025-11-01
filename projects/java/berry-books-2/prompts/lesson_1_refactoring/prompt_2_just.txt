@@ -1,0 +1,106 @@
+===============================================
+大規模リファクタリングプロンプト【中：適切版】
+===============================================
+
+berry-books-2プロジェクトをアーキテクチャガイドラインに準拠するように大規模リファクタリングしてください。
+
+## 現状の問題
+
+現在のServiceクラスは、以下の問題を抱えています：
+
+1. **EntityManagerを直接保持**：`@PersistenceContext`でEntityManagerが注入されている
+2. **DAOロジックの混在**：`em.find()`、`em.createQuery()`等のデータアクセスロジックがService内に実装
+3. **責務の不明確**：ビジネスロジックとデータアクセスロジックが混在
+
+これはアーキテクチャガイドラインの「3.3 責務の分離」に違反しています。
+
+## リファクタリング内容
+
+### 1. DAOレイヤーの作成
+
+**対象パッケージ：** `pro.kensait.berrybooks.dao`（新規作成）
+
+**作成するDAOクラス：**
+- `BookDao` - 書籍のCRUD操作
+- `StockDao` - 在庫のCRUD操作
+- `CategoryDao` - カテゴリのCRUD操作
+- `PublisherDao` - 出版社のCRUD操作
+- `CustomerDao` - 顧客のCRUD操作
+- `OrderTranDao` - 注文取引のCRUD操作
+- `OrderDetailDao` - 注文明細のCRUD操作
+
+**DAOクラスの設計：**
+- `@ApplicationScoped`を付与（シングルトン）
+- `@PersistenceContext`でEntityManagerを注入
+- CRUD操作メソッドを実装（`findById`, `findAll`, `persist`, `update`, `remove`等）
+- ビジネスロジックは含めない（データアクセスのみ）
+
+---
+
+### 2. Serviceクラスのリファクタリング
+
+**対象Serviceクラス：**
+- `BookService`
+- `CategoryService`
+- `CustomerService`
+- `OrderService`
+
+**リファクタリング内容：**
+- EntityManagerへの直接参照を削除（`@PersistenceContext`を削除）
+- DAOクラスを`@Inject`で注入
+- データアクセスロジックをDAOメソッドの呼び出しに置き換え
+- ビジネスロジックに専念
+
+**変更前の構造：**
+```
+Service
+  ├─ @PersistenceContext EntityManager
+  ├─ ビジネスロジック
+  └─ データアクセスロジック（em.find(), em.createQuery()等）
+```
+
+**変更後の構造：**
+```
+Service
+  ├─ @Inject DAO
+  ├─ ビジネスロジック
+  └─ DAO呼び出し（dao.findById(), dao.findAll()等）
+
+DAO（新規）
+  ├─ @PersistenceContext EntityManager
+  └─ データアクセスロジック（em.find(), em.createQuery()等）
+```
+
+---
+
+### 3. ログ出力の調整
+
+**現状の問題：**
+ServiceクラスでDAOのログも出力している（例：`logger.info("[ BookDao#findById ]")`）
+
+**リファクタリング内容：**
+- DAOクラスで独自のLoggerを定義
+- DAOメソッドでログを出力
+- ServiceクラスからDAOログ出力を削除
+
+---
+
+## 参考情報
+
+**アーキテクチャガイドライン：**
+- `spec/アーキテクチャガイドライン/アーキテクチャガイドライン.md`
+- セクション「3.1 レイヤーアーキテクチャ」
+- セクション「3.3 責務の分離」
+- セクション「4.3.3 ビジネスロジック層（Service）」
+- セクション「4.3.4 データアクセス層（DAO）」
+
+---
+
+## 実装の優先順位
+
+1. 最も単純なDAO（CategoryDao、PublisherDao）から作成
+2. BookDaoとStockDaoを作成
+3. CustomerDaoを作成
+4. OrderTranDaoとOrderDetailDaoを作成（最も複雑）
+5. 各ServiceクラスをリファクタリングしてDAO呼び出しに変更
+
