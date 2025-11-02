@@ -19,7 +19,7 @@ public class PersonUpdateAction extends Action {
     // JNDIルックアップでPersonServiceを取得
     private PersonService getPersonService() throws Exception {
         InitialContext ctx = new InitialContext();
-        return (PersonService) ctx.lookup("java:global/struts_person_rdb/PersonServiceBean!pro.kensait.struts.person.service.PersonService");
+        return (PersonService) ctx.lookup("java:global/struts_person/PersonServiceBean!pro.kensait.struts.person.service.PersonService");
     }
     
     @Override

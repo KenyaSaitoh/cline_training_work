@@ -17,8 +17,8 @@ jee_micro_vsc/
 │   │   ├── berry-books-2/              # Berry Books Webアプリケーション2【研修用】
 │   │   ├── berry-books-fn/             # Berry Books Webアプリケーション【完成版】
 │   │   ├── berry-books-rest/           # Berry Books REST API【完成版】
-│   │   ├── jsf_person_rdb/             # Person管理（JSF + JPA CRUD）【完成版】
-│   │   ├── struts_person_rdb/          # Person管理（Struts 1.3 + EJB）【完成版】
+│   │   ├── jsf_person/                 # Person管理（JSF + JPA CRUD）【完成版】
+│   │   ├── struts_person/              # Person管理（Struts 1.3 + EJB）【完成版】
 │   │   └── struts-to-jsf-person/       # StrutsからJakarta EEへの移行プロジェクト【研修用】
 │   ├── python/                         # Pythonプロジェクト
 │   │   ├── accounting_glue/            # ERP会計統合ETL【研修用】
