@@ -65,7 +65,9 @@ projects/python/accounting_glue/
 │
 ├── test_data/                         # テストデータ（入力CSV）
 │   ├── sales/sales_txn_export.csv
-│   ├── hr/hr_employee_org_export.csv
+│   ├── hr/
+│   │   ├── hr_employee_org_export.csv    # 従業員マスタ
+│   │   └── hr_payroll_export.csv         # 給与実績
 │   ├── inventory/inv_movement_export.csv
 │   └── expected/                      # 期待値データ（テスト用）
 │       ├── accounting_txn_interface_sales.csv
@@ -544,18 +546,48 @@ def main():
 | tax_code | VARCHAR | 税コード |
 | tax_rate | DECIMAL | 税率 |
 
-#### test_data/hr/hr_employee_org_export.csv
+#### test_data/hr/hr_employee_org_export.csv（従業員マスタ）
 
 **主要カラム**:
 
 | カラム名 | データ型 | 説明 |
 |---------|---------|------|
 | export_id | INTEGER | エクスポートID |
-| employee_id | VARCHAR | 従業員ID |
-| employee_name | VARCHAR | 従業員名 |
-| department_code | VARCHAR | 部門コード |
-| job_grade | VARCHAR | 職級 |
-| employment_type | VARCHAR | 雇用形態 |
+| employee_id | VARCHAR | 従業員ID（ジョインキー） |
+| employee_number | VARCHAR | 社員番号 |
+| last_name | VARCHAR | 姓 |
+| first_name | VARCHAR | 名 |
+| dept_code | VARCHAR | 部門コード |
+| cost_center_code | VARCHAR | コストセンタコード |
+| payroll_group | VARCHAR | 給与グループ |
+| allocation_rule_code | VARCHAR | 配賦ルールコード |
+| tax_region_code | VARCHAR | 課税地域コード |
+| bank_account_no | VARCHAR | 銀行口座番号 |
+
+#### test_data/hr/hr_payroll_export.csv（給与実績）
+
+**ファイル情報**:
+- 従業員マスタと `employee_id` でジョイン
+- INNER JOIN方式（給与実績がある従業員のみ処理）
+- 30件（従業員1人につき1レコード）
+
+**主要カラム**:
+
+| カラム名 | データ型 | 説明 |
+|---------|---------|------|
+| payroll_id | VARCHAR | 給与ID（例: PAY202501_001） |
+| employee_id | VARCHAR | 従業員ID（ジョインキー） |
+| payroll_period | VARCHAR | 給与期間（YYYY-MM形式） |
+| payment_date | DATE | 支給日 |
+| basic_salary | DECIMAL | 基本給 |
+| allowance_housing | DECIMAL | 住宅手当 |
+| allowance_transportation | DECIMAL | 交通費 |
+| deduction_tax | DECIMAL | 税金控除 |
+| deduction_insurance | DECIMAL | 保険料控除 |
+| bonus | DECIMAL | 賞与（0の場合はNULL扱い） |
+| currency_code | VARCHAR | 通貨コード（例: JPY） |
+| reversal_flag | BOOLEAN | 逆仕訳フラグ（True/False） |
+| update_timestamp | TIMESTAMP | 更新タイムスタンプ |
 
 #### test_data/inventory/inv_movement_export.csv
 

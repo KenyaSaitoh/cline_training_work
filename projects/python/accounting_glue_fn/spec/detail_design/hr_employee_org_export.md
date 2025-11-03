@@ -24,9 +24,11 @@
 
 ---
 
-## 2. 入力データ: hr_employee_org_export.csv
+## 2. 入力データ
 
-### 2.1 ファイル情報
+### 2.1 従業員マスタ: hr_employee_org_export.csv
+
+#### 2.1.1 ファイル情報
 
 | 項目 | 内容 |
 |------|------|
@@ -35,21 +37,59 @@
 | 文字コード | UTF-8 |
 | 形式 | CSV（ヘッダー行あり） |
 
-### 2.2 主要項目
+#### 2.1.2 主要項目
 
 | 項目名 | データ型 | 必須 | 説明 |
 |--------|---------|------|------|
 | export_id | INTEGER | ✔ | エクスポートID |
-| employee_id | VARCHAR(40) | ✔ | 従業員ID |
-| employee_name | VARCHAR(200) | ✔ | 従業員名 |
-| department_code | VARCHAR(30) | ✔ | 部門コード |
-| department_name | VARCHAR(200) | - | 部門名 |
-| job_grade | VARCHAR(30) | - | 職級 |
-| employment_type | VARCHAR(20) | ✔ | 雇用形態（REGULAR/CONTRACT/PART_TIME） |
-| hire_date | DATE | - | 入社日 |
-| termination_date | DATE | - | 退職日 |
-| email | VARCHAR(200) | - | メールアドレス |
-| phone | VARCHAR(50) | - | 電話番号 |
+| employee_id | VARCHAR(40) | ✔ | 従業員ID（ジョインキー） |
+| employee_number | VARCHAR(30) | ✔ | 社員番号 |
+| last_name | VARCHAR(60) | ✔ | 姓 |
+| first_name | VARCHAR(60) | ✔ | 名 |
+| dept_code | VARCHAR(30) | ✔ | 部門コード |
+| cost_center_code | VARCHAR(30) | - | コストセンタコード |
+| payroll_group | VARCHAR(30) | - | 給与グループ |
+| allocation_rule_code | VARCHAR(30) | - | 配賦ルールコード |
+| tax_region_code | VARCHAR(20) | - | 課税地域コード |
+| bank_account_no | VARCHAR(34) | - | 銀行口座番号 |
+
+### 2.2 給与実績データ: hr_payroll_export.csv
+
+#### 2.2.1 ファイル情報
+
+| 項目 | 内容 |
+|------|------|
+| ファイル名 | hr_payroll_export.csv |
+| ファイルパス | test_data/hr/hr_payroll_export.csv |
+| 文字コード | UTF-8 |
+| 形式 | CSV（ヘッダー行あり） |
+| 件数 | 30件（従業員1人につき1レコード） |
+
+#### 2.2.2 主要項目
+
+| 項目名 | データ型 | 必須 | 説明 |
+|--------|---------|------|------|
+| payroll_id | VARCHAR(30) | ✔ | 給与ID（例: PAY202501_001） |
+| employee_id | VARCHAR(40) | ✔ | 従業員ID（ジョインキー） |
+| payroll_period | VARCHAR(7) | ✔ | 給与期間（YYYY-MM形式） |
+| payment_date | DATE | ✔ | 支給日 |
+| basic_salary | DECIMAL(15,2) | ✔ | 基本給 |
+| allowance_housing | DECIMAL(15,2) | - | 住宅手当 |
+| allowance_transportation | DECIMAL(15,2) | - | 交通費 |
+| deduction_tax | DECIMAL(15,2) | - | 税金控除 |
+| deduction_insurance | DECIMAL(15,2) | - | 保険料控除 |
+| bonus | DECIMAL(15,2) | - | 賞与（0の場合はNULL扱い） |
+| currency_code | VARCHAR(3) | ✔ | 通貨コード（例: JPY） |
+| reversal_flag | BOOLEAN | ✔ | 逆仕訳フラグ（True/False） |
+| update_timestamp | TIMESTAMP | ✔ | 更新タイムスタンプ |
+
+#### 2.2.3 データ例
+
+```csv
+payroll_id,employee_id,payroll_period,payment_date,basic_salary,allowance_housing,allowance_transportation,deduction_tax,deduction_insurance,bonus,currency_code,reversal_flag,update_timestamp
+PAY202501_001,EMP00001,2025-01,2025-01-25,450000,80000,30000,55000,25000,0,JPY,False,2025-01-20 10:00:00
+PAY202501_002,EMP00002,2025-01,2025-01-25,350000,60000,25000,40000,20000,0,JPY,False,2025-01-20 10:00:00
+```
 
 ---
 
@@ -125,41 +165,69 @@ entered_cr = basic_salary
 
 **重要**: 対側仕訳（未払給与）はERP側の自動仕訳ルールで一括生成されます。
 
-### 4.3 給与データ生成ロジック
+### 4.3 給与実績データの読み込みとジョイン処理
 
-本システムでは、サンプル給与データを生成：
+#### 4.3.1 データ読み込み
+
+ETLジョブは以下の2つのCSVファイルを読み込みます：
+
+1. **従業員マスタ** (`hr_employee_org_export.csv`)
+   - 従業員の組織情報、部門コード、コストセンタなどを含む
+   
+2. **給与実績データ** (`hr_payroll_export.csv`)
+   - 各従業員の給与額、手当、控除の実績データ
+
+#### 4.3.2 ジョイン処理
+
+**ジョインキー**: `employee_id`
+
+**ジョイン方式**: INNER JOIN（給与実績がある従業員のみ処理）
+
+**処理フロー**:
 
 ```python
-def get_payroll_data(hr_record, payroll_period):
-    # 給与データ生成（サンプル実装）
-    
-    # 雇用形態別の基本給
-    if employment_type == 'REGULAR':
-        basic_salary = 300000
-    elif employment_type == 'CONTRACT':
-        basic_salary = 250000
-    elif employment_type == 'PART_TIME':
-        basic_salary = 150000
-    
-    # 手当
-    allowances = {
-        'TRANSPORT': 20000,    # 交通費
-        'HOUSING': 50000,       # 住宅手当
-        'FAMILY': 15000         # 家族手当
-    }
-    
-    # 控除
-    deductions = {
-        'INCOME_TAX': 25000,          # 所得税
-        'RESIDENT_TAX': 18000,        # 住民税
-        'SOCIAL_INSURANCE': 45000,    # 社会保険料
-        'PENSION': 28000,             # 厚生年金
-        'HEALTH': 15000,              # 健康保険
-        'EMPLOYMENT': 2000            # 雇用保険
-    }
+# 1. 従業員マスタを読み込み、辞書化
+employee_dict = {}
+for employee in read_csv('hr_employee_org_export.csv'):
+    employee_dict[employee['employee_id']] = employee
+
+# 2. 給与実績を読み込み、従業員情報とジョイン
+for payroll in read_csv('hr_payroll_export.csv'):
+    employee_id = payroll['employee_id']
+    if employee_id in employee_dict:
+        hr_record = employee_dict[employee_id]
+        
+        # 給与データをDecimal型に変換
+        payroll_data = {
+            'payroll_id': payroll['payroll_id'],
+            'payroll_period': payroll['payroll_period'],
+            'payment_date': payroll['payment_date'],
+            'basic_salary': Decimal(payroll['basic_salary']),
+            'allowances': {
+                'HOUSING': Decimal(payroll['allowance_housing']),
+                'TRANSPORTATION': Decimal(payroll['allowance_transportation'])
+            },
+            'deductions': {
+                'TAX': Decimal(payroll['deduction_tax']),
+                'INSURANCE': Decimal(payroll['deduction_insurance'])
+            },
+            'bonus': Decimal(payroll['bonus']) if payroll['bonus'] else None,
+            'currency_code': payroll['currency_code'],
+            'reversal_flag': payroll['reversal_flag'] == 'True'
+        }
+        
+        # 3. 会計仕訳に変換
+        transform_payroll_record(hr_record, payroll_data)
 ```
 
-**注**: 実運用では給与計算システムと連携
+#### 4.3.3 ジョイン結果
+
+- **マッチしたレコード**: 会計仕訳に変換して出力
+- **マッチしなかったレコード**: 
+  - 給与実績のみ存在（従業員マスタなし）→ エラーログ出力、処理スキップ
+  - 従業員マスタのみ存在（給与実績なし）→ 変換対象外（正常）
+
+**注**: 実運用では給与計算システムと連携し、給与実績データは月次で更新されます
 
 ---
 
@@ -193,18 +261,21 @@ class HRTransformer:
 
 ```
 1. 入力CSVを読込
-   └── test_data/hr/hr_employee_org_export.csv
+   ├── test_data/hr/hr_employee_org_export.csv（従業員マスタ）
+   └── test_data/hr/hr_payroll_export.csv（給与実績）
 
-2. 従業員ごとに処理
-   ├── 給与データ生成
+2. データジョイン
+   └── employee_id をキーに INNER JOIN
+
+3. 従業員ごとに処理
    ├── 基本給エントリ作成
    ├── 手当エントリ作成（複数）
    └── 控除エントリ作成（複数）
 
-3. 出力CSVへ書込
+4. 出力CSVへ書込
    └── output/accounting_txn_interface_hr.csv（個別ファイル）
 
-4. 統合処理
+5. 統合処理
    └── output/accounting_txn_interface.csv（統合ファイル）
 ```
 
@@ -212,12 +283,22 @@ class HRTransformer:
 
 ## 6. サンプルデータ
 
-### 6.1 入力サンプル（hr_employee_org_export.csv）
+### 6.1 入力サンプル
+
+#### 6.1.1 従業員マスタ（hr_employee_org_export.csv）
 
 ```csv
-export_id,employee_id,employee_name,department_code,employment_type
-1,EMP001,山田太郎,DEPT_ACC,REGULAR
-2,EMP002,鈴木花子,DEPT_DEV,CONTRACT
+export_id,employee_id,employee_number,last_name,first_name,dept_code,cost_center_code
+1,EMP00001,00001,山田,太郎,D001,CC001
+2,EMP00002,00002,鈴木,花子,D002,CC002
+```
+
+#### 6.1.2 給与実績（hr_payroll_export.csv）
+
+```csv
+payroll_id,employee_id,payroll_period,payment_date,basic_salary,allowance_housing,allowance_transportation,deduction_tax,deduction_insurance,bonus,currency_code,reversal_flag
+PAY202501_001,EMP00001,2025-01,2025-01-25,450000,80000,30000,55000,25000,0,JPY,False
+PAY202501_002,EMP00002,2025-01,2025-01-25,350000,60000,25000,40000,20000,0,JPY,False
 ```
 
 ### 6.2 出力サンプル（accounting_txn_interface.csv）
