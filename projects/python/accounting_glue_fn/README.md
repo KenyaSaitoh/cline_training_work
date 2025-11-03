@@ -98,13 +98,12 @@ tail -n +2 output/accounting_txn_interface.csv | wc -l
 
 ### PySpark版
 
+> **Windows環境でPySparkを使用する場合**: 
+> 埋め込み版Pythonなど、非標準のPython環境を使用する場合は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照してください。
+
 #### 出力フォルダのクリーンアップ（初回/終了時）
 
 ```bash
-# （オプション）埋め込み版Pythonなど、非標準のPythonを使用する場合
-# 環境変数PYTHON311_PATHを設定
-# 例: export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
-
 # 前回の出力をクリーンアップ
 python cleanup_output.py --force
 ```

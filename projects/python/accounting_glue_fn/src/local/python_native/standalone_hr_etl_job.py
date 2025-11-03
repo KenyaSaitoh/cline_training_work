@@ -9,6 +9,7 @@ import csv
 import logging
 import argparse
 from datetime import datetime
+from decimal import Decimal
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # プロジェクトルートをパスに追加
@@ -26,29 +27,34 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def process_record(record, transformer, payroll_period):
+def process_record(hr_record, payroll_record, transformer):
     # 単一レコードを処理（従業員1人 -> 最大5個の会計仕訳）
     try:
-        # ダミーの給与データを生成（実際の運用では別CSVから読み込み）
+        # 給与CSVデータを変換（Decimalに変換）
+        bonus_value = payroll_record.get('bonus', '0')
         payroll_data = {
-            'payroll_period': payroll_period,
-            'payment_date': datetime.now().strftime('%Y-%m-%d'),
-            'basic_salary': 300000,
+            'payroll_id': payroll_record.get('payroll_id', ''),
+            'payroll_period': payroll_record.get('payroll_period', ''),
+            'payment_date': payroll_record.get('payment_date', ''),
+            'payroll_date': payroll_record.get('payment_date', ''),
+            'basic_salary': Decimal(str(payroll_record.get('basic_salary', 0))),
             'allowances': {
-                'HOUSING': 50000,
-                'TRANSPORTATION': 20000
+                'HOUSING': Decimal(str(payroll_record.get('allowance_housing', 0))),
+                'TRANSPORTATION': Decimal(str(payroll_record.get('allowance_transportation', 0)))
             },
             'deductions': {
-                'TAX': 30000,
-                'INSURANCE': 15000
+                'TAX': Decimal(str(payroll_record.get('deduction_tax', 0))),
+                'INSURANCE': Decimal(str(payroll_record.get('deduction_insurance', 0)))
             },
-            'currency_code': 'JPY'
+            'bonus': Decimal(str(bonus_value)) if bonus_value and bonus_value != '0' else None,
+            'currency_code': payroll_record.get('currency_code', 'JPY'),
+            'reversal_flag': payroll_record.get('reversal_flag', 'False') == 'True'
         }
         
-        transformed_list = transformer.transform_payroll_record(record, payroll_data)
+        transformed_list = transformer.transform_payroll_record(hr_record, payroll_data)
         return ('success', transformed_list if transformed_list else [])
     except Exception as e:
-        return ('error', {'record': record, 'error': str(e)})
+        return ('error', {'record': hr_record, 'error': str(e)})
 
 
 def main():
@@ -56,7 +62,9 @@ def main():
     parser.add_argument('--input-dir', type=str, default='test_data/hr',
                         help='Input directory path')
     parser.add_argument('--input-file', type=str, default='hr_employee_org_export.csv',
-                        help='Input CSV filename (relative to input-dir)')
+                        help='Input CSV filename for employee data (relative to input-dir)')
+    parser.add_argument('--payroll-file', type=str, default='hr_payroll_export.csv',
+                        help='Input CSV filename for payroll data (relative to input-dir)')
     parser.add_argument('--output-dir', type=str, default='output',
                         help='Output directory path')
     parser.add_argument('--output-file', type=str, default='accounting_txn_interface_hr.csv',
@@ -74,7 +82,8 @@ def main():
     
     try:
         # パス設定
-        input_path = os.path.join(args.input_dir, args.input_file)
+        employee_path = os.path.join(args.input_dir, args.input_file)
+        payroll_path = os.path.join(args.input_dir, args.payroll_file)
         output_path = os.path.join(args.output_dir, args.output_file)
         
         # バッチIDの生成
@@ -84,7 +93,8 @@ def main():
         logger.info("HR ETL Job Started (Python Native - ThreadPoolExecutor)")
         logger.info("=" * 60)
         logger.info(f"Batch ID: {batch_id}")
-        logger.info(f"Input File: {input_path}")
+        logger.info(f"Employee File: {employee_path}")
+        logger.info(f"Payroll File: {payroll_path}")
         logger.info(f"Output File: {output_path}")
         logger.info(f"Payroll Period: {args.payroll_period}")
         logger.info(f"Limit Records: {args.limit if args.limit else 'None'}")
@@ -92,18 +102,31 @@ def main():
         logger.info(f"Max Workers: {args.max_workers}")
         logger.info("=" * 60)
         
-        # データ読み込み
-        logger.info(f"Reading source data from {input_path}...")
-        source_records = []
+        # 従業員データ読み込み
+        logger.info(f"Reading employee data from {employee_path}...")
+        employee_records = {}
         
-        with open(input_path, 'r', encoding='utf-8') as csvfile:
+        with open(employee_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for record in reader:
+                employee_id = record.get('employee_id')
+                if employee_id:
+                    employee_records[employee_id] = record
+        
+        logger.info(f"Loaded {len(employee_records)} employee records")
+        
+        # 給与データ読み込み
+        logger.info(f"Reading payroll data from {payroll_path}...")
+        payroll_records = []
+        
+        with open(payroll_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for i, record in enumerate(reader):
                 if args.limit and i >= args.limit:
                     break
-                source_records.append(record)
+                payroll_records.append(record)
         
-        logger.info(f"Fetched {len(source_records)} records from source")
+        logger.info(f"Loaded {len(payroll_records)} payroll records")
         
         # データ変換（ThreadPoolExecutorで並列処理）
         logger.info("Transforming HR data to accounting entries...")
@@ -112,11 +135,33 @@ def main():
         accounting_records = []
         error_records = []
         
+        # 給与データと従業員データをJOIN
+        joined_records = []
+        for payroll_record in payroll_records:
+            employee_id = payroll_record.get('employee_id')
+            if employee_id in employee_records:
+                joined_records.append({
+                    'hr_record': employee_records[employee_id],
+                    'payroll_record': payroll_record
+                })
+            else:
+                error_records.append({
+                    'record': payroll_record,
+                    'error': f"Employee ID {employee_id} not found in employee master"
+                })
+        
+        logger.info(f"Joined {len(joined_records)} records (HR + Payroll)")
+        
         with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
             # 全レコードを並列処理
             futures = {
-                executor.submit(process_record, record, transformer, args.payroll_period): record
-                for record in source_records
+                executor.submit(
+                    process_record,
+                    joined['hr_record'],
+                    joined['payroll_record'],
+                    transformer
+                ): joined
+                for joined in joined_records
             }
             
             # 結果を収集

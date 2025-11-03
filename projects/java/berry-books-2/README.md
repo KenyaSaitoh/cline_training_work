@@ -101,11 +101,16 @@ projects/java/berry-books-2/spec/
 
 > **Note**: Excelファイル (.xlsx) は、内部的にZIP圧縮されたXMLファイルの集合体です。このコマンドでOffice Open XML形式の内部構造を学習できます。
 
-## 📍 アクセスURL
+## 📍 アプリケーションへのログイン
 
 デプロイ後、以下のURLにアクセス：
 
 - **トップページ**: http://localhost:8080/berry-books-2
+
+### ログイン情報
+
+- **メールアドレス**: alice@gmail.com
+- **パスワード**: password
 
 ## 🧪 テスト
 
