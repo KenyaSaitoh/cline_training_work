@@ -8,7 +8,8 @@ ETL実装プロンプト【低：簡易版】
 
 ### 入力
 - `test_data/sales/sales_txn_export.csv`
-- `test_data/hr/hr_employee_org_export.csv`
+- `test_data/hr/hr_employee_org_export.csv`（従業員マスタ）
+- `test_data/hr/hr_payroll_export.csv`（給与実績）
 - `test_data/inventory/inv_movement_export.csv`
 
 ### 出力

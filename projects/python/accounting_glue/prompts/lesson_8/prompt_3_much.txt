@@ -2,11 +2,11 @@
 ETL実装プロンプト【高：詳細版】
 ===============================================
 
-上流システム（売上・人事・在庫）から会計システムへのデータ統合ETL処理を、3つの実行方式で実装してください。
+上流システム（売上・人事・在庫）から会計システムへのデータ統合ETL処理を実装してください。
 
 ## 1. アーキテクチャ原則
 
-### 共通変換ロジックと環境固有ラッパーの分離
+**共通変換ロジックと環境固有ラッパーの分離**
 
 ```
 [共通変換ロジック: src/etl/]
@@ -27,126 +27,46 @@ ETL実装プロンプト【高：詳細版】
 
 ### 2.1 SalesTransformer（`sales_transformer.py`）
 
-**クラス構造**:
-```
-class SalesTransformer:
-    def __init__(self, batch_id: str)
-    def transform_record(self, source_record: dict) -> dict
-```
+**入力**: `sales_txn_export.csv`
 
-**変換ロジック**:
+**変換内容**:
+- トランザクションタイプ別の勘定科目マッピング
+- 税額計算と外貨換算
+- 必須項目バリデーション
 
-**A. 必須項目バリデーション**
-- source_txn_id、source_line_id、txn_type、customer_code、product_code、unit_price、currency_code、tax_code、tax_rate
-- txn_type='INVOICE'または'SHIP'の場合、quantity_shippedも必須
-
-**B. トランザクションタイプ別マッピング**
-
-| txn_type | segment_account | entered_dr | entered_cr |
-|----------|----------------|------------|------------|
-| INVOICE  | 4100（売上高） | 0 | unit_price × quantity |
-| SHIP     | 4100（売上高） | 0 | unit_price × quantity |
-
-**対象**: INVOICEとSHIPのみ。ORDER、CM、PMTは将来対応。
-
-**C. 税額計算と外貨換算**
-- tax_amount = unit_price × quantity × tax_rate（小数点以下2桁に丸め）
-- accounted_cr = entered_cr × exchange_rate（JPYの場合は換算なし）
-
-**D. エラーハンドリング**
-- バリデーションエラー: error_code='E_VALIDATION'
-- マッピングエラー: error_code='E_MAPPING'
-- エラー時はstatus_code='ERROR'で出力
-
-**仕様参照**: `spec/detail_design/sales_txn_export.md`（セクション4）、`ddl/source/sales_txn_export.sql`
-
-**出力DDL**: `ddl/erp/accounting_txn_interface.sql`
-
----
+**仕様参照**: `spec/detail_design/sales_txn_export.md`、`ddl/source/sales_txn_export.sql`
 
 ### 2.2 HRTransformer（`hr_transformer.py`）
 
-**クラス構造**:
-```
-class HRTransformer:
-    def __init__(self, batch_id: str)
-    def transform_record(self, source_record: dict) -> list[dict]
-```
+**入力**: 
+1. `hr_employee_org_export.csv`（従業員マスタ）
+2. `hr_payroll_export.csv`（給与実績）
+3. **ジョイン**: `employee_id`をキーにINNER JOIN
 
-**変換ロジック**:
+**変換内容**:
+- 給与項目別の勘定科目マッピング
+- 1従業員から複数仕訳を生成（基本給・手当・控除ごと）
+- 片側記録方式（対側は会計システムで自動生成）
 
-**A. 必須項目バリデーション**
-- employee_id、employee_name、department_code、employment_type
-
-**B. 給与項目別マッピング**
-
-| 給与項目 | 借方勘定 | 貸方勘定 |
-|---------|---------|---------|
-| 基本給 | 6100（給与費用） | 2110（未払給与） |
-| 残業手当 | 6110（残業手当費用） | 2110（未払給与） |
-| 控除（社会保険） | 2110（未払給与） | 2120（預り金） |
-
-**C. 雇用形態別の勘定科目調整**
-- REGULAR（正社員）: 6100番台
-- CONTRACT（契約社員）: 6200番台
-- PART_TIME（パート）: 6300番台
-
-**D. 複数仕訳生成**
-- 1レコードから複数の会計仕訳を生成（給与・手当・控除ごと）
-
-**仕様参照**: `spec/detail_design/hr_employee_org_export.md`（セクション4）、`ddl/source/hr_employee_org_export.sql`
-
----
+**仕様参照**: `spec/detail_design/hr_employee_org_export.md`（セクション4.3: ジョイン処理）、`ddl/source/hr_*.sql`
 
 ### 2.3 InventoryTransformer（`inventory_transformer.py`）
 
-**クラス構造**:
-```
-class InventoryTransformer:
-    def __init__(self, batch_id: str)
-    def transform_record(self, source_record: dict) -> dict
-```
+**入力**: `inv_movement_export.csv`
 
-**変換ロジック**:
+**変換内容**:
+- 移動タイプ別の勘定科目マッピング（RCV/ISS/ADJ）
+- 原価計算（quantity × unit_cost）
 
-**A. 必須項目バリデーション**
-- movement_id、movement_type、product_code、quantity、unit_of_measure、unit_cost、warehouse_code
-
-**B. 移動タイプ別マッピング**
-
-| movement_type | 借方勘定 | 貸方勘定 | 金額 |
-|--------------|---------|---------|------|
-| RCV（入庫） | 1300（棚卸資産） | 2100（買掛金） | quantity × unit_cost |
-| ISS（出庫） | 5100（売上原価） | 1300（棚卸資産） | quantity × unit_cost |
-| ADJ（調整） | 増減により判定 | 増減により判定 | quantity × unit_cost |
-
-**C. 金額計算（片側記録方式）**
-- cost_amount = quantity × unit_cost（小数点以下2桁に丸め）
-- 全て借方に記録: entered_dr = cost_amount、entered_cr = 0
-
-**仕様参照**: `spec/detail_design/inv_movement_export.md`（セクション4）、`ddl/source/inv_movement_export.sql`
+**仕様参照**: `spec/detail_design/inv_movement_export.md`、`ddl/source/inv_movement_export.sql`
 
 ---
 
 ## 3. 共通モジュール（`src/common/`）
 
-### 3.1 config.py
-- 勘定科目コード（ACCOUNT_CODES）
-- ステータスコード（STATUS_READY、STATUS_ERROR）
-- エラーコード（ERROR_VALIDATION、ERROR_MAPPING）
-- システム固定値（DEFAULT_LEDGER_ID、DEFAULT_COMPANY_CODE等）
-
-### 3.2 csv_handler.py
-- CSV読み込み（DictReader）
-- CSV書き込み（DictWriter）
-- ヘッダー検証
-
-### 3.3 utils.py
-- バッチID生成: generate_batch_id(source_system) → "{SYSTEM}_YYYYMMDD_HHMMSS"
-- 日時フォーマット: format_timestamp(dt)、parse_date(date_str)
-- 期間名生成: generate_period_name(accounting_date) → "YYYY-MM"
-- 金額丸め: round_amount(amount, decimals=2)
-- ロギング設定
+- **config.py**: 勘定科目コード、ステータスコード、エラーコード
+- **csv_handler.py**: CSV読み込み/書き込み
+- **utils.py**: バッチID生成、日時フォーマット、金額丸め、ロギング
 
 ---
 
@@ -154,122 +74,43 @@ class InventoryTransformer:
 
 ### 4.1 ①Python標準版（`src/local/python_native/`）
 
-**実装ファイル**:
+3つのスタンドアロンジョブ:
 - `standalone_sales_etl_job.py`
 - `standalone_hr_etl_job.py`
 - `standalone_inventory_etl_job.py`
 
-**実装内容**:
-
-**A. コマンドライン引数のパース**
-- --input-file, --output-file, --batch-id, --limit-records, --max-workers, --error-threshold
-
-**B. 処理フロー**
+**処理フロー**:
 ```
-1. Transformerインスタンス化
-2. CSV読み込み（csv_handler）
-3. ThreadPoolExecutor.map()で並列変換
-4. エラーレコード収集
-5. CSV書き込み
-6. 統計情報出力（総件数、成功件数、エラー件数）
+CSV読み込み → ThreadPoolExecutor.map(transform) → CSV書き込み
 ```
-
-**C. エラーハンドリング**
-- 各レコードのエラーを捕捉
-- error_threshold超過で処理中断
-- 全エラーをログ出力
-
----
 
 ### 4.2 ②PySpark版（`src/local/pyspark/`）
 
-**実装ファイル**:
+3つのPySparkジョブ:
 - `pyspark_sales_etl_job.py`
 - `pyspark_hr_etl_job.py`
 - `pyspark_inventory_etl_job.py`
 
-**実装内容**:
-
-**A. SparkSession作成**
-- appName設定
-- ローカルモード: local[*]
-
-**B. 処理フロー**
+**処理フロー**:
 ```
-1. Transformerインスタンス化
-2. spark.read.csv()でCSV読み込み（header=True）
-3. RDD.map()で各レコードを変換
-4. collect()で結果収集
-5. CSV書き込み（csv_handler）
-6. SparkSession停止
+spark.read.csv → RDD.map(transform) → collect() → CSV書き込み
 ```
-
-**C. 注意点**
-- 共通Transformerを使用（変換ロジックは同じ）
-- RDD操作はラッパー層でのみ
-
----
 
 ### 4.3 ③AWS Glue版（`src/aws_glue/`）
 
-**実装ファイル**:
+3つのGlueジョブスクリプト:
 - `sales_etl_job.py`
 - `hr_etl_job.py`
 - `inventory_etl_job.py`
 
-**実装内容**:
-
-**A. GlueContext初期化**
-- SparkContext取得
-- Job初期化
-
-**B. ジョブパラメータ取得**
-- s3_bucket, input_prefix, input_file, output_prefix, output_file, batch_id, limit_records, error_threshold
-
-**C. 処理フロー**
+**処理フロー**:
 ```
-1. Transformerインスタンス化
-2. S3からCSV読み込み（spark.read.csv）
-   - s3://bucket/input_prefix/input_file
-3. RDD.map()で各レコードを変換
-4. S3へCSV書き込み（spark.write.csv）
-   - s3://bucket/output_prefix/output_file
-5. Job完了
+S3読み込み → RDD.map(transform) → S3書き込み
 ```
-
-**D. 共通変換ロジックの利用**
-- Python library pathで`src/etl/`と`src/common/`を参照
-- ローカルと完全に同じ変換ロジック
-
----
 
 ### 4.4 オーケストレーター（`src/local/etl_orchestrator.py`）
 
-**役割**: 3つのETLジョブを並列実行し、出力ファイルを統合
-
-**実装内容**:
-
-**A. コマンドライン引数**
-- --max-workers: 並列度
-- --cleanup: 事前クリーンアップ
-- --executor: 実行方式（python/pyspark）
-
-**B. 処理フロー**
-```
-1. 出力フォルダクリーンアップ（オプション）
-2. ThreadPoolExecutorで3ジョブを並列実行
-   - sales_etl_job
-   - hr_etl_job
-   - inventory_etl_job
-3. 全ジョブ完了待機
-4. 出力ファイル統合（merge_etl_outputs.py呼び出し）
-   - 個別ファイル → 統合ファイル
-5. 統計情報出力
-```
-
-**C. エラーハンドリング**
-- 個別ジョブのエラー収集
-- 全ジョブ失敗時は処理中断
+3つのETLジョブを並列実行し、出力ファイルを統合。
 
 ---
 
@@ -277,105 +118,45 @@ class InventoryTransformer:
 
 ### 5.1 単体テスト（`tests/unit/`）
 
-**テストファイル**:
-```
-tests/unit/test_etl/
-├── test_sales_transformer.py
-├── test_hr_transformer.py
-└── test_inventory_transformer.py
-```
-
-**テストケース**:
+各Transformerの変換ロジックをテスト:
 - 正常系: 各トランザクションタイプ、外貨換算、税額計算
 - 異常系: 必須項目不足、不正な値
 - エラーコード: E_VALIDATION、E_MAPPING
 
 **実行**: `python -m pytest tests/unit/ -v`
 
----
-
 ### 5.2 統合テスト（`tests/integration/`）
 
-**テストファイル**: `test_etl_output.py`
-
-**テストケース**:
-- 出力ファイル存在確認
-- レコード数検証（期待値データとの一致）
+ETL出力ファイルと期待値データを照合:
+- レコード数検証
 - カラム値検証
-- 集計値検証（システム別件数、金額合計）
+- 集計値検証
 
-**期待値データ**: `test_data/expected/accounting_txn_interface_expected.csv`
-
-**実行**:
-```bash
-# ETL実行
-python src/local/etl_orchestrator.py --max-workers 4 --cleanup
-
-# 統合テスト実行
-python -m pytest tests/integration/test_etl_output.py -v
-```
+**期待値データ**: `test_data/expected/*.csv`
 
 ---
 
 ## 6. 実装の優先順位
 
-**フェーズ1: 基盤**
-1. 共通モジュール（config、csv_handler、utils）
-
-**フェーズ2: Transformer**
-2. SalesTransformer + 単体テスト
-3. HRTransformer + 単体テスト
-4. InventoryTransformer + 単体テスト
-
-**フェーズ3: 実行方式①**
-5. Python標準版（3ジョブ）
-
-**フェーズ4: 実行方式②**
-6. PySpark版（3ジョブ）
-
-**フェーズ5: 実行方式③**
-7. AWS Glue版（3ジョブ）
-
-**フェーズ6: オーケストレーション**
-8. オーケストレーター
-9. 統合テスト
+**フェーズ1**: 共通モジュール（config、csv_handler、utils）  
+**フェーズ2**: 3つのTransformer + 単体テスト  
+**フェーズ3**: Python標準版（3ジョブ）  
+**フェーズ4**: PySpark版（3ジョブ）  
+**フェーズ5**: AWS Glue版（3ジョブ）  
+**フェーズ6**: オーケストレーター + 統合テスト
 
 ---
 
-## 7. 実装上の注意事項
+## 7. 参照資料（必読）
 
-### 型ヒント
-全関数に型ヒントを付与：
-```
-def transform_record(self, source_record: dict) -> dict:
-```
-
-### Docstring
-Google Styleで記述
-
-### ログ出力
-統一フォーマット：
-```
-logger.info(f"[{source_system}] 処理開始: batch_id={batch_id}")
-logger.info(f"[{source_system}] 総件数: {total}, 成功: {success}, エラー: {error}")
-```
-
-### エラーハンドリング
-- 個別レコードのエラーは捕捉してERROR statusで出力
-- エラー閾値超過で処理中断
-
----
-
-## 8. 参照資料
+### 変換仕様（詳細）
+- `spec/detail_design/sales_txn_export.md`
+- `spec/detail_design/hr_employee_org_export.md`（**セクション4.3: ジョイン処理**）
+- `spec/detail_design/inv_movement_export.md`
 
 ### DDL
-- **入力**: `ddl/source/`（sales_txn_export.sql、hr_employee_org_export.sql、inv_movement_export.sql）
+- **入力**: `ddl/source/`（sales_txn_export.sql、hr_employee_org_export.sql、**hr_payroll_export.sql**、inv_movement_export.sql）
 - **出力**: `ddl/erp/accounting_txn_interface.sql`
-
-### 詳細設計書
-- `spec/detail_design/sales_txn_export.md`
-- `spec/detail_design/hr_employee_org_export.md`
-- `spec/detail_design/inv_movement_export.md`
 
 ### アーキテクチャ
 - `ARCHITECTURE.md`

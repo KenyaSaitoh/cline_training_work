@@ -21,7 +21,7 @@
 > - **PySpark版を使用する場合、Python 3.11を推奨します**。Python 3.12ではPySparkに互換性問題があります
 > - Python 3.12を使用している場合は、**Python標準版（PySpark不要）を使用してください**
 > - システムインストール版Python以外（埋め込み版など）を使用する場合は、環境変数`PYTHON311_PATH`を設定してください
-> - Windows環境で埋め込み版Pythonを使用する場合の詳細は [README_WINDOWS_EMBED.md](README_WINDOWS_EMBED.md) を参照
+> - Windows環境で埋め込み版Pythonを使用する場合の詳細は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照
 
 ## セットアップ
 
@@ -98,8 +98,8 @@ tail -n +2 output/accounting_txn_interface.csv | wc -l
 
 ### PySpark版
 
-> **Windows環境でPySparkを使用する場合**: 
-> 埋め込み版Pythonなど、非標準のPython環境を使用する場合は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照してください。
+> **Windows + Python 3.11以外の環境でPySparkを使用する場合**: 
+> 埋め込み版Pythonなど、システムインストール版Python 3.11以外の環境を使用する場合は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照してください。システムインストール版Python 3.11を使用している場合は、以下の通常の手順で実行できます。
 
 #### 出力フォルダのクリーンアップ（初回/終了時）
 
@@ -260,7 +260,7 @@ projects/python/accounting_glue_fn/
 ├── requirements.txt               # Python依存パッケージ（本番用）
 ├── requirements-dev.txt           # 開発・テスト用依存パッケージ
 ├── README.md                      # このファイル
-├── README_WINDOWS_EMBED.md        # Windows埋め込み版Pythonセットアップガイド
+├── README_WINDOWS_PYSPARK.md      # Windows + Python 3.11以外の環境セットアップガイド
 └── ARCHITECTURE.md                # アーキテクチャドキュメント
 ```
 
