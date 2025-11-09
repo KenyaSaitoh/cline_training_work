@@ -2,7 +2,7 @@
 <%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
 <%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>
 <%@ taglib uri="http://struts.apache.org/tags-logic" prefix="logic" %>
-<%@ page import="dev.berry.model.Person" %>
+<%@ page import="pro.kensait.struts.person.model.Person" %>
 <%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html>
@@ -27,7 +27,7 @@
             </tr>
         </thead>
         <tbody>
-            <logic:iterate id="person" name="personList" type="dev.berry.model.Person">
+            <logic:iterate id="person" name="personList" type="pro.kensait.struts.person.model.Person">
                 <tr>
                     <td><bean:write name="person" property="personId"/></td>
                     <td><bean:write name="person" property="personName"/></td>

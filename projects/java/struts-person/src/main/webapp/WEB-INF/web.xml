@@ -8,6 +8,19 @@
   <display-name>Person Management System - Struts</display-name>
   
   <!-- ========== Context Param ================================= -->
+  <!-- JSFを無効化 -->
+  <context-param>
+    <param-name>com.sun.faces.enableRestoreView11Compatibility</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>javax.faces.PROJECT_STAGE</param-name>
+    <param-value>Production</param-value>
+  </context-param>
+  <context-param>
+    <param-name>org.apache.myfaces.DISABLE_JSF_ANNOTATIONS_SCAN</param-name>
+    <param-value>true</param-value>
+  </context-param>
   
   <!-- ========== Servlet ======================================= -->
   <servlet>

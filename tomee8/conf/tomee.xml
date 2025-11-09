@@ -20,4 +20,13 @@
 
   <!-- activate next line to be able to deploy applications in apps -->
   <!-- <Deployments dir="apps" /> -->
+  
+  <!-- HSQLDB DataSource for struts-person application -->
+  <Resource id="HsqldbDS" type="DataSource">
+    JdbcDriver org.hsqldb.jdbc.JDBCDriver
+    JdbcUrl jdbc:hsqldb:hsql://localhost:9001/testdb
+    UserName SA
+    Password 
+    JtaManaged true
+  </Resource>
 </tomee>

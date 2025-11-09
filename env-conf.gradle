@@ -42,7 +42,7 @@ tomee8 {
                   : "tomee8/bin/shutdown.sh"
     
     // ポート設定
-    httpPort = 8088
+    httpPort = 8080
     httpsPort = 8443
     ajpPort = 8009
     shutdownPort = 8005

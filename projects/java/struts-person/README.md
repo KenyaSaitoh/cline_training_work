@@ -17,19 +17,17 @@
 
 > **Note:** このプロジェクトはTomEE 8を使用します（Payaraではありません）。
 
-### ① と ② の準備（初回のみ）
-
-**① TomEE 8の初期設定（研修開催時に実行）:**
+### ① TomEE 8の初期設定（初回のみ・研修開催時に実行）
 
 ```bash
 # 1. TomEE 8のserver.xmlを初期化（クリーンな状態にリセット）
 ./gradlew :projects:java:struts-person:initTomee8Config
 
-# 2. TomEE 8のポートをPayaraと競合しないように設定
-./gradlew :projects:java:struts-person:configureTomee8Ports
+# 2. TomEE 8のデータソース設定（HSQLDB接続のための重要な設定）
+./gradlew :projects:java:struts-person:configureTomee8DataSource
 ```
 
-**② HSQLDBサーバーの起動:**
+### ② HSQLDBサーバーの起動
 
 ```bash
 # HSQLDBサーバーを起動（バックグラウンド）
@@ -46,16 +44,19 @@
 > **Note:** TomEE 8は`startTomee8`（フォアグラウンド、Ctrl+Cで停止）または`startTomee8Background`（バックグラウンド）で起動できます。
 > フォアグラウンドモードはログがターミナルに直接表示されるため、デバッグに便利です。
 
-### ④ プロジェクトを開始するときに1回だけ実行
+### ④ プロジェクトを開始するときに実行
 
 ```bash
-# 1. データベーステーブルとデータを作成（初回のみ）
+# 1. HSQLDBサーバーを起動（まだ起動していない場合）
+./gradlew startHsqldb
+
+# 2. データベーステーブルとデータを作成（初回のみ）
 ./gradlew :projects:java:struts-person:setupHsqldb
 
-# 2. TomEE 8を起動（フォアグラウンド - Ctrl+Cで停止可能）
+# 3. TomEE 8を起動（フォアグラウンド - Ctrl+Cで停止可能）
 ./gradlew :projects:java:struts-person:startTomee8
 
-# 3. プロジェクトをビルドしてデプロイ（別のターミナルで実行）
+# 4. プロジェクトをビルドしてデプロイ（別のターミナルで実行）
 ./gradlew :projects:java:struts-person:deployToTomee8
 ```
 
@@ -79,7 +80,7 @@
 
 デプロイ後、以下のURLにアクセス：
 
-- **トップページ**: http://localhost:8088/struts-person/
+- **トップページ**: http://localhost:8080/struts-person/
 
 ## 🎯 プロジェクト構成
 
@@ -140,9 +141,35 @@ projects/struts-person/
 
 ## 📝 データソース設定について
 
-TomEE 8はコンテナ管理のデータソースをサポートしています。
+TomEE 8でHSQLDBデータソースを使用するには、**2つの設定**が必要です。
 
-### 設定内容
+### 1. TomEE 8側の設定（`tomee8/conf/tomee.xml`）
+
+データソースのリソース定義を追加します。これは`configureTomee8DataSource`タスクで自動設定されます：
+
+```xml
+<Resource id="HsqldbDS" type="DataSource">
+  JdbcDriver org.hsqldb.jdbc.JDBCDriver
+  JdbcUrl jdbc:hsqldb:hsql://localhost:9001/testdb
+  UserName SA
+  Password 
+  JtaManaged true
+</Resource>
+```
+
+### 2. アプリケーション側の設定（`WEB-INF/web.xml`）
+
+データソースの参照を定義します（既に設定済み）：
+
+```xml
+<resource-ref>
+  <res-ref-name>jdbc/HsqldbDS</res-ref-name>
+  <res-type>javax.sql.DataSource</res-type>
+  <res-auth>Container</res-auth>
+</resource-ref>
+```
+
+### データソース接続情報
 
 - **JNDI名**: `jdbc/HsqldbDS`
 - **データベース**: `testdb`
@@ -150,13 +177,11 @@ TomEE 8はコンテナ管理のデータソースをサポートしています�
 - **パスワード**: （空文字）
 - **TCPサーバー**: `localhost:9001`
 
-データソースは`WEB-INF/web.xml`で定義されており、TomEEが自動的にルックアップします。
+### ⚠️ 重要な注意事項
 
-### ⚠️ 注意事項
-
-- HSQLDB Databaseサーバーが起動している必要があります
-- TomEE 8起動前にHSQLDBサーバーを起動してください
-- データソース設定はweb.xmlに記述されています
+1. **初回セットアップ時**: 必ず`configureTomee8DataSource`タスクを実行してください
+2. **起動順序**: HSQLDBサーバー → TomEE 8 の順で起動してください
+3. **エラー時**: `java.sql.SQLSyntaxErrorException: user lacks privilege or object not found: PERSON`が出る場合は、`setupHsqldb`タスクでテーブルを作成してください
 
 ## 🔍 主な機能
 
@@ -311,7 +336,8 @@ Strutsタグライブラリを使用して動的コンテンツを表示。
 | タスク | 説明 |
 |--------|------|
 | `:projects:java:struts-person:initTomee8Config` | server.xmlを初期状態にリセット（研修開催時に実行） |
-| `:projects:java:struts-person:configureTomee8Ports` | ポートを8088に設定（初回のみ） |
+| `:projects:java:struts-person:configureTomee8Ports` | ポートを8080に設定（初回のみ） |
+| `:projects:java:struts-person:configureTomee8DataSource` | HSQLDBデータソースを設定（初回のみ・重要） |
 | `:projects:java:struts-person:startTomee8` | TomEE 8を起動（フォアグラウンド、Ctrl+Cで停止） |
 | `:projects:java:struts-person:startTomee8Background` | TomEE 8をバックグラウンドで起動 |
 | `:projects:java:struts-person:stopTomee8` | TomEE 8を停止（バックグラウンド起動時） |

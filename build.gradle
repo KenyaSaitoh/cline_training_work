@@ -221,7 +221,7 @@ subprojects {
     if (project.name == "struts-person") {
         // クリーンなserver.xmlをテンプレートから初期化する
         task initTomee8Config doLast {
-            def templateFile = rootProject.file("${rootProject.conf.tomee8.home}/conf/server.xml.template")
+            def templateFile = rootProject.file("${rootProject.conf.tomee8.home}/conf/server.xml.original")
             def targetFile = rootProject.file("${rootProject.conf.tomee8.home}/conf/server.xml")
             
             if (!templateFile.exists()) {
@@ -289,6 +289,49 @@ subprojects {
             println "  - HTTPS Port: ${rootProject.conf.tomee8.httpsPort}"
             println "  - Shutdown Port: ${rootProject.conf.tomee8.shutdownPort}"
             println "  - AJP Port: ${rootProject.conf.tomee8.ajpPort}"
+        }
+        
+        // TomEE 8のデータソース設定
+        task configureTomee8DataSource doLast {
+            def tomeeXml = rootProject.file("${rootProject.conf.tomee8.home}/conf/tomee.xml")
+            
+            if (!tomeeXml.exists()) {
+                throw new GradleException("tomee.xml not found: ${tomeeXml}")
+            }
+            
+            println "Configuring TomEE 8 DataSource..."
+            
+            def content = tomeeXml.text
+            
+            // データソース定義が既に存在するかチェック
+            if (content.contains('id="HsqldbDS"')) {
+                println "DataSource already configured in tomee.xml"
+                return
+            }
+            
+            // データソース定義を追加
+            def dataSourceConfig = """
+  
+  <!-- HSQLDB DataSource for struts-person application -->
+  <Resource id="HsqldbDS" type="DataSource">
+    JdbcDriver org.hsqldb.jdbc.JDBCDriver
+    JdbcUrl jdbc:hsqldb:hsql://localhost:${rootProject.conf.hsqldb.tcpPort}/${rootProject.conf.hsqldb.general.db}
+    UserName ${rootProject.conf.hsqldb.general.user}
+    Password ${rootProject.conf.hsqldb.general.password}
+    JtaManaged true
+  </Resource>"""
+            
+            // </tomee>の前に挿入
+            content = content.replace('</tomee>', "${dataSourceConfig}\n</tomee>")
+            
+            tomeeXml.text = content
+            
+            println "TomEE 8 DataSource configured:"
+            println "  - Resource ID: HsqldbDS"
+            println "  - JDBC URL: jdbc:hsqldb:hsql://localhost:${rootProject.conf.hsqldb.tcpPort}/${rootProject.conf.hsqldb.general.db}"
+            println "  - UserName: ${rootProject.conf.hsqldb.general.user}"
+            println ""
+            println "✅ DataSource configuration completed successfully!"
         }
 
         // TomEE 8を起動（フォアグラウンド - Ctrl+Cで停止可能）
@@ -443,7 +486,7 @@ subprojects {
         }
 
         // タスクをグループ化する
-        [initTomee8Config, configureTomee8Ports, startTomee8, startTomee8Background, stopTomee8, restartTomee8, 
+        [initTomee8Config, configureTomee8Ports, configureTomee8DataSource, startTomee8, startTomee8Background, stopTomee8, restartTomee8, 
          deployToTomee8, undeployFromTomee8]*.group = "tomee8"
     }
 
