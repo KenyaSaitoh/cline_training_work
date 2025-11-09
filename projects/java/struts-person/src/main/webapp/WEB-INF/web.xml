@@ -43,7 +43,7 @@
   <ejb-local-ref>
     <ejb-ref-name>ejb/PersonService</ejb-ref-name>
     <ejb-ref-type>Session</ejb-ref-type>
-    <local>dev.berry.service.PersonService</local>
+    <local>pro.kensait.struts.person.service.PersonService</local>
     <ejb-link>PersonServiceBean</ejb-link>
   </ejb-local-ref>
   

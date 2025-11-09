@@ -20,22 +20,4 @@
 
   <!-- activate next line to be able to deploy applications in apps -->
   <!-- <Deployments dir="apps" /> -->
-  
-  <!-- HSQLDB DataSource -->
-  <Resource id="jdbc/HsqldbDS" type="javax.sql.DataSource">
-    JdbcDriver = org.hsqldb.jdbc.JDBCDriver
-    JdbcUrl = jdbc:hsqldb:hsql://localhost:9001/testdb
-    UserName = SA
-    Password = 
-    JtaManaged = true
-    MaxActive = 20
-    MaxIdle = 10
-    MinIdle = 0
-    MaxWait = 30000
-    TestOnBorrow = true
-    TestWhileIdle = true
-    TimeBetweenEvictionRuns = 30000
-    ValidationQuery = SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS
-  </Resource>
-  
 </tomee>

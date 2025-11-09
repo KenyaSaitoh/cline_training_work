@@ -10,8 +10,8 @@
     <enterprise-beans>
         <session>
             <ejb-name>PersonServiceBean</ejb-name>
-            <business-local>dev.berry.service.PersonService</business-local>
-            <ejb-class>dev.berry.service.PersonServiceBean</ejb-class>
+            <business-local>pro.kensait.struts.person.service.PersonService</business-local>
+            <ejb-class>pro.kensait.struts.person.service.PersonServiceBean</ejb-class>
             <session-type>Stateless</session-type>
             <transaction-type>Container</transaction-type>
         </session>
