@@ -6,7 +6,7 @@ ETL実装プロンプト【中：適切版】
 
 ## 1. アーキテクチャ原則
 
-**共通変換ロジック（`src/etl/`）を環境非依存で実装し、3つの実行環境（Python標準版/PySpark版/AWS Glue版）で共通利用します。**
+**共通変換ロジック（`src/etl/`）を環境非依存で実装し、3つの実行環境で共通利用します。**
 
 ```
 [共通] src/etl/Transformer
@@ -16,60 +16,43 @@ ETL実装プロンプト【中：適切版】
 [実行環境③] AWS Glue版（S3 + RDD）
 ```
 
----
-
 ## 2. 実装対象
 
 ### 2.1 共通変換ロジック（`src/etl/`）
 
 3つのTransformerを実装：
 - **SalesTransformer**: 売上データ変換
-- **HRTransformer**: 人事データ変換（**2つのCSVをジョイン**）
+- **HRTransformer**: 人事データ変換（`hr_employee_org_export.csv`と`hr_payroll_export.csv`を`employee_id`でINNER JOIN）
 - **InventoryTransformer**: 在庫データ変換
-
-**重要**: HRは`hr_employee_org_export.csv`（従業員マスタ）と`hr_payroll_export.csv`（給与実績）を`employee_id`でINNER JOINして処理します。
-
-**変換仕様**: `spec/detail_design/`配下の各MDファイル参照  
-**DDL**: `ddl/source/`配下のSQLファイル参照
 
 ### 2.2 共通モジュール（`src/common/`）
 
-- **config.py**: 勘定科目マッピング、システム固定値
+- **config.py**: 勘定科目マッピング、システム固定値、エラーコード定義
 - **csv_handler.py**: CSV読み込み/書き込み
 - **utils.py**: バッチID生成、日時フォーマット、ロギング
 
 ### 2.3 実行環境別のラッパー
 
 #### ①Python標準版（`src/local/python_native/`）
-- 3つのスタンドアロンジョブを実装
-- ThreadPoolExecutorで並列処理
-- 小規模データ向け（〜1万レコード）
+ThreadPoolExecutorで並列処理（小規模データ向け）
 
 #### ②PySpark版（`src/local/pyspark/`）
-- 3つのPySparkジョブを実装
-- RDD.map()で分散処理
-- 大規模データ向け（10万レコード〜）
+RDD.map()で分散処理（大規模データ向け）
 
 #### ③AWS Glue版（`src/aws_glue/`）
-- 3つのGlueジョブスクリプトを実装
-- S3読み込み/書き込み
-- 本番環境
+S3読み込み/書き込み（本番環境）
 
 ### 2.4 オーケストレーター（`src/local/etl_orchestrator.py`）
 
-3つのETLジョブを並列実行し、個別出力ファイルを統合して`accounting_txn_interface.csv`を生成。
-
----
+3つのETLジョブを並列実行し、個別出力を統合して`accounting_txn_interface.csv`を生成。
 
 ## 3. テスト
 
 ### 単体テスト（`tests/unit/`）
-各Transformerの変換ロジックをテスト（pytest）
+各Transformerの変換ロジックをテスト
 
 ### 統合テスト（`tests/integration/`）
-ETL出力ファイルと期待値データ（`test_data/expected/`）を照合
-
----
+ETL出力と期待値データ（`test_data/expected/`）を照合
 
 ## 4. 実装の優先順位
 
@@ -80,12 +63,9 @@ ETL出力ファイルと期待値データ（`test_data/expected/`）を照合
 5. AWS Glue版（3ジョブ）
 6. オーケストレーター + 統合テスト
 
----
-
 ## 5. 参照資料
 
-**必ず参照してください：**
 - **変換仕様**: `spec/detail_design/*.md`（各システムの変換ロジック詳細）
-- **DDL**: `ddl/source/*.sql`（入力データ構造）、`ddl/erp/*.sql`（出力データ構造）
+- **DDL**: `ddl/source/*.sql`（入力構造）、`ddl/erp/*.sql`（出力構造）
 - **アーキテクチャ**: `ARCHITECTURE.md`
 - **実行方法**: `README.md`

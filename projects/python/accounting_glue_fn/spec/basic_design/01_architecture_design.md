@@ -2,24 +2,6 @@
 
 ## 第1部: アーキテクチャ設計
 
-### ドキュメント管理
-
-| 項目 | 内容 |
-|------|------|
-| ドキュメント名 | ERP会計統合ETLシステム 基本設計書 - アーキテクチャ編 |
-| バージョン | 3.0 |
-| 作成日 | 2025-10-26 |
-| 更新日 | 2025-10-29 |
-| ステータス | 承認済み |
-
-### 改訂履歴
-
-| バージョン | 日付 | 内容 |
-|-----------|------|------|
-| 3.0 | 2025-10-29 | Python Native/PySpark両対応、テスト環境整備、統合出力対応 |
-| 2.0 | 2025-10-26 | CSV入出力ベースへ全面刷新、データベース依存を削除 |
-| 1.0 | 2025-10-25 | 初版作成 |
-
 ---
 
 ## 1. システムアーキテクチャ概要
@@ -289,22 +271,20 @@ test_data/expected/                 # 期待値データ（テスト用）
 
 **主要機能**:
 
-```python
-def run_parallel(systems, input_base_dir, output_dir):
-    # 並列実行
-    # - ThreadPoolExecutorで並列実行
-    # - 各ジョブをsubprocessで起動
+**run_parallel()**:
+- 並列実行機能
+- ThreadPoolExecutorで並列実行
+- 各ジョブをsubprocessで起動
     
-def run_sequential(systems, input_base_dir, output_dir):
-    # 順次実行
-    # - エラー発生時は後続スキップ
+**run_sequential()**:
+- 順次実行機能
+- エラー発生時は後続スキップ
     
-def merge_output_files(output_dir, output_file, systems):
-    # 個別ファイル統合
-    # - 各システムの個別CSVを読込
-    # - 1つの統合CSVに結合
-    # - 個別ファイルは削除（オプション）
-```
+**merge_output_files()**:
+- 個別ファイル統合機能
+- 各システムの個別CSVを読込
+- 1つの統合CSVに結合
+- 個別ファイルは削除（オプション）
 
 **パラメータ**:
 - `--execution_mode`: parallel/sequential
@@ -318,26 +298,22 @@ def merge_output_files(output_dir, output_file, systems):
 
 #### standalone_sales_etl_job.py（例）
 
-```python
-def main():
-    # 売上ETLメイン処理
-    
-    # 1. パラメータ取得
-    input_dir = args.input_dir  # test_data/sales
-    output_dir = args.output_dir  # output
-    
-    # 2. CSV読込
-    source_data = read_csv(input_path)
-    
-    # 3. 変換処理
-    transformer = SalesTransformer(batch_id)
-    for record in source_data:
-        accounting_record = transformer.transform_record(record)
-        accounting_records.append(accounting_record)
-    
-    # 4. CSV出力
-    write_csv(output_path, accounting_records)
-```
+**メイン処理フロー**:
+
+1. **パラメータ取得**:
+   - input_dir: 入力ディレクトリ（例: test_data/sales）
+   - output_dir: 出力ディレクトリ（例: output）
+
+2. **CSV読込**:
+   - ソースデータをCSVファイルから読み込む
+
+3. **変換処理**:
+   - Transformerインスタンスを生成
+   - 各レコードに対して変換処理を実行
+   - 変換後レコードをリストに追加
+
+4. **CSV出力**:
+   - 変換後レコードをCSVファイルに書き込む
 
 **パラメータ**:
 - `--input-dir`: 入力ディレクトリ

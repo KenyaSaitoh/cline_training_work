@@ -2,24 +2,6 @@
 
 ## 第2部: モジュール設計・データモデル設計
 
-### ドキュメント管理
-
-| 項目 | 内容 |
-|------|------|
-| ドキュメント名 | ERP会計統合ETLシステム 基本設計書 - モジュール・データモデル編 |
-| バージョン | 3.0 |
-| 作成日 | 2025-10-26 |
-| 更新日 | 2025-10-29 |
-| ステータス | 承認済み |
-
-### 改訂履歴
-
-| バージョン | 日付 | 内容 |
-|-----------|------|------|
-| 3.0 | 2025-10-29 | テスト環境追加、バリデーション強化、Python Native/PySpark両対応 |
-| 2.0 | 2025-10-26 | CSV入出力ベースへ全面刷新、データベースモジュール削除 |
-| 1.0 | 2025-10-25 | 初版作成 |
-
 ---
 
 ## 1. モジュール構成
@@ -99,60 +81,29 @@ projects/python/accounting_glue/
 
 #### 主要な定義
 
-```python
-# ソースシステム定義
-SOURCE_SYSTEMS = {
-    'SALE': {'code': 'SALE', 'name': '売上システム'},
-    'HR': {'code': 'HR', 'name': '人事システム'},
-    'INV': {'code': 'INV', 'name': '在庫システム'}
-}
+**ソースシステム定義**:
+- SALE: 売上システム
+- HR: 人事システム
+- INV: 在庫システム
 
-# 勘定科目マッピング
-ACCOUNT_MAPPING = {
-    # 売上関連
-    'REVENUE': {
-        'account': '4100',
-        'name': '売上高'
-    },
-    'AR': {
-        'account': '1100',
-        'name': '売掛金'
-    },
-    # 人事関連
-    'SALARY_EXPENSE': {
-        'account': '6100',
-        'name': '給与費用'
-    },
-    'PAYROLL_PAYABLE': {
-        'account': '2110',
-        'name': '未払給与'
-    },
-    # 在庫関連
-    'INVENTORY': {
-        'account': '1300',
-        'name': '棚卸資産'
-    },
-    'COGS': {
-        'account': '5100',
-        'name': '売上原価'
-    }
-}
+**勘定科目マッピング**:
+- 4100: 売上高
+- 1100: 売掛金
+- 6100: 給与費用
+- 2110: 未払給与
+- 1300: 棚卸資産
+- 5100: 売上原価
 
-# 税コードマッピング
-TAX_CODE_MAPPING = {
-    'TAX_STANDARD': {'rate': 0.10, 'name': '標準税率'},
-    'TAX_REDUCED': {'rate': 0.08, 'name': '軽減税率'},
-    'TAX_EXEMPT': {'rate': 0.00, 'name': '非課税'}
-}
+**税コードマッピング**:
+- TAX_STANDARD: 標準税率 10%
+- TAX_REDUCED: 軽減税率 8%
+- TAX_EXEMPT: 非課税 0%
 
-# エラーコード
-ERROR_CODES = {
-    'E_VALIDATION': '検証エラー',
-    'E_MAPPING': 'マッピングエラー',
-    'E_CALCULATION': '計算エラー',
-    'E_PROCESSING': '処理エラー'
-}
-```
+**エラーコード定義**:
+- E_VALIDATION: 検証エラー
+- E_MAPPING: マッピングエラー
+- E_CALCULATION: 計算エラー
+- E_PROCESSING: 処理エラー
 
 ### 2.2 csv_handler.py - CSV入出力モジュール
 
@@ -163,39 +114,21 @@ ERROR_CODES = {
 
 #### 主要関数
 
-```python
-def read_csv(file_path: str) -> List[Dict[str, Any]]:
-    # CSVファイルを読み込む
-    # 
-    # Args:
-    #     file_path: CSVファイルパス
-    # 
-    # Returns:
-    #     レコードのリスト（各レコードは辞書）
-    # 
-    # Raises:
-    #     FileNotFoundError: ファイルが存在しない
-    #     Exception: 読込エラー
+**read_csv()**:
+- CSVファイルを読み込む
+- 引数: ファイルパス
+- 戻り値: レコードのリスト（各レコードは辞書）
+- エラー: FileNotFoundError、Exception
 
-def write_csv(file_path: str, records: List[Dict[str, Any]]):
-    # CSVファイルを書き込む
-    # 
-    # Args:
-    #     file_path: 出力CSVファイルパス
-    #     records: レコードのリスト
-    # 
-    # Raises:
-    #     Exception: 書込エラー
+**write_csv()**:
+- CSVファイルを書き込む
+- 引数: 出力ファイルパス、レコードリスト
+- エラー: Exception
 
-def cleanup_output_dir(output_dir: str) -> List[str]:
-    # 出力ディレクトリをクリーンアップする
-    # 
-    # Args:
-    #     output_dir: クリーンアップ対象ディレクトリ
-    # 
-    # Returns:
-    #     削除したファイルパスのリスト
-```
+**cleanup_output_dir()**:
+- 出力ディレクトリをクリーンアップする
+- 引数: クリーンアップ対象ディレクトリ
+- 戻り値: 削除したファイルパスのリスト
 
 ### 2.3 utils.py - ユーティリティモジュール
 
@@ -207,27 +140,11 @@ def cleanup_output_dir(output_dir: str) -> List[str]:
 
 #### 主要クラス
 
-```python
-class ETLUtils:
-    # ETL共通ユーティリティ
-    
-    @staticmethod
-    def generate_batch_id(system_code: str) -> str:
-        # バッチID生成
-        # 形式: SALE_YYYYMMDD_HHMMSS
-    
-    @staticmethod
-    def calculate_tax(amount: Decimal, tax_rate: Decimal) -> Decimal:
-        # 税額計算
-    
-    @staticmethod
-    def round_decimal(value: Decimal, precision: int) -> Decimal:
-        # 四捨五入
-    
-    @staticmethod
-    def validate_required_fields(record: dict, fields: list) -> bool:
-        # 必須項目検証
-```
+**主要機能**:
+- バッチID生成（形式: SALE_YYYYMMDD_HHMMSS）
+- 税額計算
+- 四捨五入
+- 必須項目検証
 
 ---
 
@@ -237,34 +154,10 @@ class ETLUtils:
 
 すべてのTransformerは以下の共通パターンに従う：
 
-```python
-class BaseTransformer:
-    # Transformer基底クラス（概念的な定義）
-    
-    def __init__(self, batch_id: str):
-        self.batch_id = batch_id
-        self.load_timestamp = datetime.now(timezone.utc)
-    
-    def transform_record(self, source_record: dict) -> dict:
-        # 1レコードを変換
-        # 
-        # Args:
-        #     source_record: ソースレコード（CSV行データ）
-        # 
-        # Returns:
-        #     会計インターフェースレコード
-        raise NotImplementedError
-    
-    def _create_base_record(self, source_record: dict) -> dict:
-        # 基本項目を設定
-        pass
-    
-    def _create_error_record(self, source_record: dict, 
-                            error_code: str, 
-                            error_message: str) -> dict:
-        # エラーレコードを生成
-        pass
-```
+**主要メソッド**:
+- `transform_record()`: 1レコードを変換
+- `_create_base_record()`: 基本項目を設定
+- `_create_error_record()`: エラーレコードを生成
 
 ### 3.2 SalesTransformer - 売上データ変換
 
@@ -273,29 +166,11 @@ class BaseTransformer:
 
 #### 変換ロジック
 
-```python
-class SalesTransformer:
-    def transform_record(self, source_record: dict) -> dict:
-        # 売上レコード変換
-        # 
-        # 変換ルール:
-        # 1. トランザクションタイプに応じた勘定科目決定
-        #    - INVOICE: 借方=売掛金(1100), 貸方=売上高(4100)
-        #    - SHIP: 借方=売掛金(1100), 貸方=売上高(4100)
-        #    - ORDER: 仕訳なし（受注段階）
-        # 
-        # 2. 税額計算
-        #    - tax_amount = unit_price * quantity * tax_rate
-        # 
-        # 3. 外貨換算
-        #    - JPY以外の場合、exchange_rateで換算
-        # 
-        # 4. セグメント情報設定
-        #    - segment_department: 部門コード
-        #    - segment_product: 商品コード
-        #    - customer_id: 顧客コード
-        pass
-```
+**変換ルール**:
+1. トランザクションタイプに応じた勘定科目決定（INVOICE/SHIP→売上高、ORDER→仕訳なし）
+2. 税額計算（tax_amount = unit_price × quantity × tax_rate）
+3. 外貨換算（JPY以外の場合、exchange_rateで換算）
+4. セグメント情報設定（部門、商品、顧客）
 
 **出力項目マッピング**:
 
@@ -322,37 +197,27 @@ class SalesTransformer:
 
 #### 変換ロジック
 
-```python
-class HRTransformer:
-    def transform_payroll_record(self, 
-                                hr_record: dict, 
-                                payroll_data: dict) -> List[dict]:
-        # 給与レコード変換（複数エントリ生成）
-        # 
-        # バリデーション:
-        # - employee_id必須（不在時エラーレコード返却）
-        # - department_code必須（不在時エラーレコード返却）
-        # 
-        # 変換ルール:
-        # 1. 基本給
-        #    - 借方: 給与費用(6100)
-        #    - 貸方: 未払給与(2110)
-        # 
-        # 2. 各種手当（allowances）
-        #    - 交通費: 借方=旅費交通費(6200)
-        #    - 住宅手当: 借方=福利厚生費(6300)
-        # 
-        # 3. 各種控除（deductions）
-        #    - 所得税: 貸方=預り金-所得税(2120)
-        #    - 社会保険料: 貸方=預り金-社保(2130)
-        # 
-        # 4. 部門配賦
-        #    - segment_department: hr_record['department_code']
-        # 
-        # Returns:
-        #     給与項目ごとの仕訳レコードリスト
-        pass
-```
+**バリデーション**:
+- employee_id必須（不在時エラーレコード返却）
+- department_code必須（不在時エラーレコード返却）
+
+**変換ルール**:
+1. **基本給**:
+   - 借方: 給与費用(6100)
+   - 貸方: 未払給与(2110)
+
+2. **各種手当**:
+   - 交通費: 借方=旅費交通費(6200)
+   - 住宅手当: 借方=福利厚生費(6300)
+
+3. **各種控除**:
+   - 所得税: 貸方=預り金-所得税(2120)
+   - 社会保険料: 貸方=預り金-社保(2130)
+
+4. **部門配賦**:
+   - segment_departmentに従業員の部門コード(department_code)を設定
+
+**戻り値**: 給与項目ごとの仕訳レコードリスト
 
 **出力例**（1従業員あたり複数エントリ）:
 
@@ -377,25 +242,18 @@ class HRTransformer:
 
 #### 変換ロジック
 
-```python
-class InventoryTransformer:
-    def transform_record(self, source_record: dict) -> dict:
-        # 在庫移動レコード変換
-        # 
-        # 変換ルール:
-        # 1. 移動タイプ別勘定科目決定
-        #    - RCV (入庫): 借方=在庫(1300), 貸方=買掛金(2100)
-        #    - ISS (出庫): 借方=売上原価(5100), 貸方=在庫(1300)
-        #    - ADJ (調整): 借方/貸方=在庫(1300), 相手=棚卸差異(5200)
-        # 
-        # 2. 原価計算
-        #    - cost_amount = unit_cost * quantity
-        # 
-        # 3. セグメント情報
-        #    - segment_product: 商品コード
-        #    - segment_department: 倉庫/拠点コード
-        pass
-```
+**変換ルール**:
+1. **移動タイプ別勘定科目決定**:
+   - RCV (入庫): 借方=在庫(1300)、貸方=買掛金(2100)
+   - ISS (出庫): 借方=売上原価(5100)、貸方=在庫(1300)
+   - ADJ (調整): 借方/貸方=在庫(1300)、相手=棚卸差異(5200)
+
+2. **原価計算**:
+   - 原価金額 = 単価 × 数量
+
+3. **セグメント情報**:
+   - segment_product: 商品コード
+   - segment_department: 倉庫/拠点コード
 
 **移動タイプ別マッピング**:
 
@@ -419,43 +277,23 @@ class InventoryTransformer:
 
 #### 主要関数
 
-```python
-def run_parallel(systems: list, 
-                input_base_dir: str, 
-                output_dir: str) -> list:
-    # 並列実行
-    # 
-    # - ThreadPoolExecutorで並列実行
-    # - 各ジョブをsubprocessで起動
-    # - 全ジョブ完了を待機
-    pass
+**run_parallel()**:
+- 並列実行処理
+- ThreadPoolExecutorで並列実行
+- 各ジョブをsubprocessで起動
+- 全ジョブ完了を待機
 
-def run_sequential(systems: list, 
-                  input_base_dir: str, 
-                  output_dir: str) -> list:
-    # 順次実行
-    # 
-    # - エラー発生時は後続ジョブをスキップ
-    # - デバッグ用途
-    pass
+**run_sequential()**:
+- 順次実行処理
+- エラー発生時は後続ジョブをスキップ
+- デバッグ用途
 
-def merge_output_files(output_dir: str, 
-                      output_file: str, 
-                      target_systems: list, 
-                      keep_individual_files: bool):
-    # 個別ファイル統合
-    # 
-    # 1. 各システムの個別CSVを読込
-    #    - accounting_txn_interface_sales.csv
-    #    - accounting_txn_interface_hr.csv
-    #    - accounting_txn_interface_inventory.csv
-    # 
-    # 2. 1つの統合CSVに結合
-    #    - accounting_txn_interface.csv
-    # 
-    # 3. 個別ファイルを削除（オプション）
-    pass
-```
+**merge_output_files()**:
+- 個別ファイル統合処理
+- 処理内容:
+  1. 各システムの個別CSVを読込（accounting_txn_interface_sales.csv、accounting_txn_interface_hr.csv、accounting_txn_interface_inventory.csv）
+  2. 1つの統合CSVに結合（accounting_txn_interface.csv）
+  3. 個別ファイルを削除（オプション）
 
 #### 実行フロー
 
@@ -479,47 +317,31 @@ def merge_output_files(output_dir: str,
 
 #### 共通構造
 
-```python
-def main():
-    # 個別ETLジョブメイン処理
-    
-    # 1. パラメータ解析
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input-dir', default='test_data/sales')
-    parser.add_argument('--input-file', default='sales_txn_export.csv')
-    parser.add_argument('--output-dir', default='output')
-    parser.add_argument('--output-file', default='accounting_txn_interface_sales.csv')
-    parser.add_argument('--limit', type=int, default=None)
-    parser.add_argument('--error-threshold', type=int, default=100)
-    
-    # 2. CSV読込
-    input_path = os.path.join(args.input_dir, args.input_file)
-    source_data = read_csv(input_path)
-    
-    # 3. 変換処理
-    transformer = SalesTransformer(batch_id)
-    accounting_records = []
-    error_count = 0
-    
-    for source_record in source_data:
-        try:
-            target_record = transformer.transform_record(source_record)
-            
-            # datetime → 文字列変換
-            for key, value in target_record.items():
-                if isinstance(value, datetime):
-                    target_record[key] = value.strftime('%Y-%m-%d %H:%M:%S')
-            
-            accounting_records.append(target_record)
-        except Exception as e:
-            error_count += 1
-            if error_count > args.error_threshold:
-                raise
-    
-    # 4. CSV出力
-    output_path = os.path.join(args.output_dir, args.output_file)
-    write_csv(output_path, accounting_records)
-```
+**メイン処理フロー**:
+
+1. **パラメータ解析**:
+   - --input-dir: 入力ディレクトリ（デフォルト: test_data/sales）
+   - --input-file: 入力ファイル名（デフォルト: sales_txn_export.csv）
+   - --output-dir: 出力ディレクトリ（デフォルト: output）
+   - --output-file: 出力ファイル名（デフォルト: accounting_txn_interface_sales.csv）
+   - --limit: 処理レコード数制限（デフォルト: なし）
+   - --error-threshold: エラー閾値（デフォルト: 100）
+
+2. **CSV読込**:
+   - 入力ファイルパスを構築
+   - CSVファイルを読み込む
+
+3. **変換処理**:
+   - Transformerインスタンス生成
+   - 各ソースレコードに対して:
+     - 変換処理を実行
+     - datetime型を文字列に変換（YYYY-MM-DD HH:MM:SS形式）
+     - 変換後レコードをリストに追加
+   - エラーカウントがerror_thresholdを超えた場合は例外発生
+
+4. **CSV出力**:
+   - 出力ファイルパスを構築
+   - 変換後レコードをCSVファイルに書き込む
 
 ---
 
@@ -672,9 +494,248 @@ def main():
 
 ---
 
-## 6. エラーハンドリング設計
+## 6. 項目編集定義（データマッピング）
 
-### 6.1 エラー分類
+### 6.1 売上トランザクションエクスポート → 会計トランザクションインターフェース
+
+| Target Field (accounting_txn_interface) | Source Field (sales_txn_export) | Transformation Logic | Mandatory | Validation / Error Code |
+| --------------------------------------- | ------------------------------- | -------------------- | --------- | ----------------------- |
+| **識別/監査** |
+| batch_id | システム生成 | SALE_YYYYMMDD_HHMMSS形式 | ✔ | - |
+| source_system | 固定値 | 'SALE' | ✔ | - |
+| source_doc_type | txn_type | ORDER/SHIP/INVOICE/CM/PMT | ✔ | E_VALIDATION |
+| source_doc_id | source_txn_id | 直接マッピング | ✔ | E_VALIDATION |
+| source_line_id | source_line_id | 直接マッピング | ✔ | E_VALIDATION |
+| event_timestamp | event_timestamp | 直接マッピング | ✔ | - |
+| load_timestamp | システム生成 | ETL実行時刻（UTC） | ✔ | - |
+| status_code | 検証結果 | READY/ERROR | ✔ | - |
+| error_code | エラー時設定 | E_VALIDATION/E_MAPPING等 | △ | - |
+| error_message | エラー時設定 | エラー内容 | △ | - |
+| **会社/会計カレンダ/通貨** |
+| ledger_id | 固定値 | 'GL001' | ✔ | - |
+| legal_entity_id | 固定値 | 'COMP001' | ✔ | - |
+| business_unit | 固定値 | 'BU001' | ✔ | - |
+| company_code | 固定値 | 'COMP001' | ✔ | - |
+| accounting_date | invoice_date or event_timestamp | 日付変換 | ✔ | E_VALIDATION |
+| period_name | accounting_date | YYYY-MM形式に変換 | ✔ | - |
+| journal_category | txn_type | Invoice→'Sales', PMT→'Payment' | ✔ | - |
+| currency_code | currency_code | 直接マッピング | ✔ | E_VALIDATION |
+| exchange_rate_type | 固定値 | 'Corporate' | △ | - |
+| exchange_rate | exchange_rate or 計算 | 為替レート取得（JPYは1.0） | △ | E_CUR_002 |
+| **セグメント** |
+| segment_account | txn_type + tax_code | 勘定科目マッピング | ✔ | E_MAPPING |
+| segment_department | customer_code | 顧客コードから部門マッピング | △ | - |
+| segment_product | product_code | 商品コード正規化（大文字） | △ | E_MDM_001 |
+| segment_project | NULL | プロジェクトコード（将来対応） | - | - |
+| segment_interco | NULL | 内部取引コード（将来対応） | - | - |
+| segment_custom1 | campaign_code | キャンペーンコード | - | - |
+| segment_custom2 | salesperson_code | 営業担当者コード | - | - |
+| **取引先/サブレジャ** |
+| customer_id | customer_code | 顧客コード正規化（大文字） | △ | E_MDM_002 |
+| supplier_id | NULL | 仕入先ID（売上では使用しない） | - | - |
+| bank_account_id | NULL | 銀行口座ID | - | - |
+| invoice_id | invoice_id | 直接マッピング | △ | - |
+| invoice_line_id | source_line_id | 直接マッピング | △ | - |
+| po_id | NULL | 発注書ID | - | - |
+| receipt_id | NULL | 入庫ID | - | - |
+| asset_id | NULL | 固定資産ID | - | - |
+| project_id | NULL | プロジェクトID | - | - |
+| **金額/数量** |
+| entered_dr | net_amount | 返品時のみ設定（片側記録） | ✔ | - |
+| entered_cr | net_amount | 通常売上時設定（片側記録） | ✔ | W_ZERO（両方0の場合） |
+| accounted_dr | entered_dr × exchange_rate | 記帳通貨換算（借方） | ✔ | - |
+| accounted_cr | entered_cr × exchange_rate | 記帳通貨換算（貸方） | ✔ | - |
+| quantity | quantity_shipped | 出荷数量 | △ | - |
+| uom_code | uom_code | 単位コード（EA/KG/L） | △ | - |
+| **税/収益認識** |
+| tax_code | tax_code | 税コード | △ | E_TAX_001 |
+| tax_rate | tax_rate | 税率 | △ | - |
+| tax_amount_entered | tax_amount | 税額（入力通貨） | △ | - |
+| revrec_rule_code | revrec_rule_code | 収益認識ルール | - | - |
+| revrec_start_date | invoice_date | 収益認識開始日 | - | - |
+| revrec_end_date | NULL | 収益認識終了日 | - | - |
+| **説明/参照** |
+| description | product_name + order_id + customer_code | 摘要（最大500文字） | △ | - |
+| reference1 | order_id | 受注ID | - | - |
+| reference2 | invoice_id | 請求ID | - | - |
+| reference3 | shipment_id | 出荷ID | - | - |
+| reference4 | reference1 | 参照情報1 | - | - |
+| reference5 | reference2 | 参照情報2 | - | - |
+| **取消/反転** |
+| reversal_flag | return_flag or cancel_flag | 取消フラグ（True/False） | △ | - |
+| reversed_interface_id | NULL | 取消元インターフェースID | - | - |
+| **作成/更新** |
+| created_by | 固定値 | 'ETL_SALES' | ✔ | - |
+| updated_by | 固定値 | 'ETL_SALES' | ✔ | - |
+
+**変換ロジック補足**:
+
+- **片側記録方式**: 通常売上は貸方（entered_cr）のみ記録、返品は借方（entered_dr）のみ記録
+- **勘定科目マッピング**: INVOICE→4100（売上高）、SHIP→4100、PMT→1100（現金預金）
+- **外貨換算**: JPY以外の場合、exchange_rateで換算（JPYは1.0）
+
+### 6.2 在庫移動エクスポート → 会計トランザクションインターフェース
+
+| Target Field (accounting_txn_interface) | Source Field (inv_movement_export) | Transformation Logic | Mandatory | Validation / Error Code |
+| --------------------------------------- | ---------------------------------- | -------------------- | --------- | ----------------------- |
+| **識別/監査** |
+| batch_id | システム生成 | INV_YYYYMMDD_HHMMSS形式 | ✔ | - |
+| source_system | 固定値 | 'INV' | ✔ | - |
+| source_doc_type | movement_type | RCV/ISS/ADJ/CNT/TRF/CST | ✔ | E_INV_001 |
+| source_doc_id | movement_id | 直接マッピング | ✔ | E_KEY_DUP |
+| source_line_id | movement_line_id | 直接マッピング | ✔ | E_KEY_DUP |
+| event_timestamp | movement_timestamp | 直接マッピング | ✔ | - |
+| load_timestamp | システム生成 | ETL実行時刻（UTC） | ✔ | - |
+| status_code | 検証結果 | READY/ERROR | ✔ | - |
+| error_code | エラー時設定 | E_VALIDATION/E_MAPPING等 | △ | - |
+| error_message | エラー時設定 | エラー内容 | △ | - |
+| **会社/会計カレンダ/通貨** |
+| ledger_id | 固定値 | 'GL001' | ✔ | - |
+| legal_entity_id | 固定値 | 'COMP001' | ✔ | - |
+| business_unit | 固定値 | 'BU001' | ✔ | - |
+| company_code | 固定値 | 'COMP001' | ✔ | - |
+| accounting_date | movement_timestamp | 日付変換 | ✔ | E_VALIDATION |
+| period_name | accounting_date | YYYY-MM形式に変換 | ✔ | - |
+| journal_category | movement_type | RCV→'Inventory', ISS→'Cost', ADJ→'Adjustment' | ✔ | E_MAP_CAT |
+| currency_code | currency_code | 直接マッピング | △ | E_CUR_001 |
+| exchange_rate_type | 固定値 | 'Corporate' | △ | - |
+| exchange_rate | exchange_rate or 計算 | 為替レート取得（JPYは1.0） | △ | E_CUR_002 |
+| **セグメント** |
+| segment_account | movement_type + cost_method | 勘定科目マッピング（詳細は後述） | ✔ | E_ACC_002 |
+| segment_department | inventory_org | 在庫組織から部門マッピング | △ | Default if missing |
+| segment_product | item_code | 品目コード正規化（大文字） | △ | E_MDM_ITEM |
+| segment_project | project_code | プロジェクトコード | - | - |
+| segment_interco | NULL | 内部取引コード | - | - |
+| segment_custom1 | inventory_org | 在庫組織コード | - | - |
+| segment_custom2 | subinventory_code | サブ在庫コード | - | - |
+| **取引先/サブレジャ** |
+| customer_id | NULL | 顧客ID | - | - |
+| supplier_id | source_doc_type='PO'時 | 発注書から仕入先特定 | △ | - |
+| bank_account_id | NULL | 銀行口座ID | - | - |
+| invoice_id | NULL | 請求書ID | - | - |
+| invoice_line_id | NULL | 請求書明細ID | - | - |
+| po_id | source_doc_type='PO'時 | 発注書ID | △ | - |
+| receipt_id | movement_type='RCV'時 | movement_id | △ | - |
+| asset_id | NULL | 固定資産ID | - | - |
+| project_id | project_code | プロジェクトID | - | - |
+| **金額/数量** |
+| entered_dr | quantity × unit_cost | 移動金額（すべて借方記録） | ✔ | E_COST_001 |
+| entered_cr | 固定値 | 0（片側記録方式） | ✔ | - |
+| accounted_dr | entered_dr × exchange_rate | 記帳通貨換算（借方） | ✔ | - |
+| accounted_cr | 固定値 | 0（片側記録方式） | ✔ | - |
+| quantity | quantity | 数量 | ✔ | W_ZERO（0の場合） |
+| uom_code | uom_code | 単位コード（EA/KG/L） | △ | - |
+| **税/収益認識** |
+| tax_code | NULL | 税コード（在庫では不使用） | - | - |
+| tax_rate | NULL | 税率 | - | - |
+| tax_amount_entered | NULL | 税額 | - | - |
+| revrec_rule_code | NULL | 収益認識ルール | - | - |
+| revrec_start_date | NULL | 収益認識開始日 | - | - |
+| revrec_end_date | NULL | 収益認識終了日 | - | - |
+| **説明/参照** |
+| description | movement_type + item_description + location_code | 摘要（最大500文字） | △ | - |
+| reference1 | source_doc_id | 発生元伝票ID | - | - |
+| reference2 | wip_job_id | 製造オーダーID | - | - |
+| reference3 | lot_no | ロット番号 | - | - |
+| reference4 | serial_no | シリアル番号 | - | - |
+| reference5 | reason_code | 理由コード | - | - |
+| **取消/反転** |
+| reversal_flag | reason_code | 'REVERSAL'/'CANCEL'含む時True | △ | - |
+| reversed_interface_id | NULL | 取消元インターフェースID | - | - |
+| **作成/更新** |
+| created_by | 固定値 | 'ETL_INV' | ✔ | - |
+| updated_by | 固定値 | 'ETL_INV' | ✔ | - |
+
+**変換ロジック補足**:
+
+- **片側記録方式**: すべて借方（entered_dr）のみ記録、貸方は常に0
+- **勘定科目マッピング**: RCV→1300（棚卸資産）、ISS→5100（売上原価）、ADJ（増加）→1300、ADJ（減少）→5200（棚卸差異）
+- **原価計算**: STD→標準原価、AVG→移動平均原価、その他→記録単価
+
+### 6.3 人事・給与エクスポート → 会計トランザクションインターフェース
+
+| Target Field (accounting_txn_interface) | Source Field (hr_employee_org_export + hr_payroll_export) | Transformation Logic | Mandatory | Validation / Error Code |
+| --------------------------------------- | --------------------------------------------------------- | -------------------- | --------- | ----------------------- |
+| **識別/監査** |
+| batch_id | システム生成 | HR_YYYYMMDD_HHMMSS形式 | ✔ | - |
+| source_system | 固定値 | 'HR' | ✔ | - |
+| source_doc_type | 固定値 | 'PAYROLL' | ✔ | - |
+| source_doc_id | employee_id + payroll_id + payroll_period | 複合キー生成 | ✔ | E_KEY_DUP |
+| source_line_id | payroll_type | SALARY/ALLOWANCE_xxx/DEDUCTION_xxx | ✔ | - |
+| event_timestamp | payment_date | 給与支給日 | ✔ | - |
+| load_timestamp | システム生成 | ETL実行時刻（UTC） | ✔ | - |
+| status_code | 検証結果 | READY/ERROR | ✔ | - |
+| error_code | エラー時設定 | E_VALIDATION/E_MAPPING等 | △ | - |
+| error_message | エラー時設定 | エラー内容 | △ | - |
+| **会社/会計カレンダ/通貨** |
+| ledger_id | 固定値 | 'GL001' | ✔ | - |
+| legal_entity_id | 固定値 | 'COMP001' | ✔ | - |
+| business_unit | 固定値 | 'BU001' | ✔ | - |
+| company_code | 固定値 | 'COMP001' | ✔ | - |
+| accounting_date | payment_date | 日付変換 | ✔ | E_VALIDATION |
+| period_name | payroll_period | YYYY-MM形式（直接使用） | ✔ | - |
+| journal_category | payroll_type | SALARY→'Payroll', BONUS→'Bonus', TAX→'Tax' | ✔ | - |
+| currency_code | currency_code | 直接マッピング | ✔ | E_VALIDATION |
+| exchange_rate_type | 固定値 | 'Corporate' | △ | - |
+| exchange_rate | 計算 | 為替レート取得（JPYは1.0） | △ | E_CUR_002 |
+| **セグメント** |
+| segment_account | payroll_type | 給与項目別勘定科目マッピング（詳細は後述） | ✔ | E_ACC_PAY |
+| segment_department | dept_code | 部門コード（配賦ルール適用） | ✔ | E_VALIDATION |
+| segment_product | NULL | 商品コード（給与では不使用） | - | - |
+| segment_project | allocation_rule_code | プロジェクト配賦（工数連携） | △ | - |
+| segment_interco | NULL | 内部取引コード | - | - |
+| segment_custom1 | cost_center_code | コストセンタコード | - | - |
+| segment_custom2 | payroll_group | 給与グループ | - | - |
+| **取引先/サブレジャ** |
+| customer_id | NULL | 顧客ID | - | - |
+| supplier_id | NULL | 仕入先ID | - | - |
+| bank_account_id | bank_account_no | 銀行口座番号 | △ | - |
+| invoice_id | NULL | 請求書ID | - | - |
+| invoice_line_id | NULL | 請求書明細ID | - | - |
+| po_id | NULL | 発注書ID | - | - |
+| receipt_id | NULL | 入庫ID | - | - |
+| asset_id | NULL | 固定資産ID | - | - |
+| project_id | allocation_rule_code | プロジェクトID（配賦ルール） | △ | - |
+| **金額/数量** |
+| entered_dr | payroll_amount | 支給項目時設定（片側記録） | ✔ | E_PAY_SUM |
+| entered_cr | payroll_amount | 控除項目時設定（片側記録） | ✔ | - |
+| accounted_dr | entered_dr × exchange_rate | 記帳通貨換算（借方） | ✔ | - |
+| accounted_cr | entered_cr × exchange_rate | 記帳通貨換算（貸方） | ✔ | - |
+| quantity | NULL | 数量（給与では不使用） | - | - |
+| uom_code | NULL | 単位コード | - | - |
+| **税/収益認識** |
+| tax_code | payroll_type + tax_region_code | 給与税コード生成 | △ | - |
+| tax_rate | NULL | 税率 | - | - |
+| tax_amount_entered | NULL | 税額 | - | - |
+| revrec_rule_code | NULL | 収益認識ルール | - | - |
+| revrec_start_date | NULL | 収益認識開始日 | - | - |
+| revrec_end_date | NULL | 収益認識終了日 | - | - |
+| **説明/参照** |
+| description | employee_number + last_name + first_name + payroll_type | 摘要（最大500文字） | △ | - |
+| reference1 | employee_number | 社員番号 | △ | - |
+| reference2 | payroll_group | 給与グループ | - | - |
+| reference3 | allocation_rule_code | 配賦ルールコード | - | - |
+| reference4 | payroll_id | 給与ID | - | - |
+| reference5 | NULL | 予備 | - | - |
+| **取消/反転** |
+| reversal_flag | reversal_flag | 取消フラグ（True/False） | ✔ | - |
+| reversed_interface_id | NULL | 取消元インターフェースID | - | - |
+| **作成/更新** |
+| created_by | 固定値 | 'ETL_HR' | ✔ | - |
+| updated_by | 固定値 | 'ETL_HR' | ✔ | - |
+
+**変換ロジック補足**:
+
+- **データジョイン**: hr_employee_org_export（従業員マスタ）とhr_payroll_export（給与実績）をemployee_idでINNER JOIN
+- **複数エントリ生成**: 1従業員あたり複数仕訳（基本給、各種手当、各種控除）
+- **片側記録方式**: 支給項目は借方（entered_dr）のみ、控除項目は貸方（entered_cr）のみ記録
+- **勘定科目マッピング**: SALARY→6100（給与費）、ALLOWANCE_HOUSING→6130（福利厚生費）、DEDUCTION_TAX→2400（預り金）等
+
+---
+
+## 7. エラーハンドリング設計
+
+### 7.1 エラー分類
 
 | エラーコード | 説明 | 処理 |
 |------------|------|------|
@@ -683,7 +744,7 @@ def main():
 | E_CALCULATION | 計算エラー | ERROR statusで出力 |
 | E_PROCESSING | 処理エラー | ログ記録、処理継続 |
 
-### 6.2 エラーレコード出力
+### 7.2 エラーレコード出力
 
 エラー発生時も、以下の最小限情報でCSV出力：
 
@@ -694,9 +755,9 @@ SALE_20251026_120000,SALE,TXN001,ERROR,E_VALIDATION,顧客コードが不正で�
 
 ---
 
-## 7. パフォーマンス設計
+## 8. パフォーマンス設計
 
-### 7.1 処理性能目標
+### 8.1 処理性能目標
 
 | 項目 | 目標値 | 実績 |
 |------|--------|------|
@@ -706,7 +767,7 @@ SALE_20251026_120000,SALE,TXN001,ERROR,E_VALIDATION,顧客コードが不正で�
 | 統合処理 | 1秒以内 | 0.2秒 |
 | **合計** | **3秒以内** | Python Native: **1.2秒**<br>PySpark: **7.5秒** |
 
-### 7.2 最適化手法
+### 8.2 最適化手法
 
 **Python Native版:**
 1. **並列実行**: ThreadPoolExecutorで3ジョブ同時実行
@@ -718,28 +779,3 @@ SALE_20251026_120000,SALE,TXN001,ERROR,E_VALIDATION,顧客コードが不正で�
 2. **RDD変換**: map()による並列変換
 3. **broadcast変数**: プロジェクトパス、batch_idの共有
 
----
-
-## 付録
-
-### A. 関連ドキュメント
-
-- [基本設計書 - アーキテクチャ編](./01_architecture_design.md)
-- [詳細設計書 - 売上ETL](../detail_design/sales_txn_export.md)
-- [詳細設計書 - 人事ETL](../detail_design/hr_employee_org_export.md)
-- [詳細設計書 - 在庫ETL](../detail_design/inv_movement_export.md)
-- [README](../../README.md)
-
-### B. サンプルデータ
-
-**入力例** (sales_txn_export.csv):
-```csv
-export_id,source_txn_id,txn_type,customer_code,product_code,quantity_shipped,unit_price,currency_code,tax_code,tax_rate
-1,TXN001,INVOICE,CUST001,PROD001,10,1000,JPY,TAX_STANDARD,0.10
-```
-
-**出力例** (accounting_txn_interface.csv):
-```csv
-batch_id,source_system,source_doc_id,segment_account,entered_dr,entered_cr,accounted_dr,accounted_cr
-SALE_20251026_120000,SALE,TXN001,4100,0,10000,0,10000
-```
