@@ -6,236 +6,97 @@ berry-books-1プロジェクトに在庫チェック機能を追加してくだ�
 
 ## 実装内容
 
-詳細設計書の「8.3.3 在庫チェックロジック詳細」（`spec/詳細設計書/BerryBooks_詳細設計書.md` 791-829行目）に記載された仕様に従って実装してください。
+詳細設計書（`spec/詳細設計書/EXCEL詳細仕様書_解凍版`フォルダ）の「8.3.3 在庫チェックロジック詳細」および「14.2.1 OutOfStockException」に記載された仕様に従って実装してください。
 
 ---
 
 ### 1. OutOfStockException例外クラスの作成
 
-#### 対象ファイル
-- **新規作成:** `src/main/java/pro/kensait/berrybooks/service/order/OutOfStockException.java`
+**新規作成:** `src/main/java/pro/kensait/berrybooks/service/order/OutOfStockException.java`
 
-#### クラス仕様
+詳細設計書「14.2.1 OutOfStockException」の仕様に従って実装してください。
 
-**パッケージ：** `pro.kensait.berrybooks.service.order`
-
-**継承元：** `RuntimeException`
-
-**フィールド：**
-- `bookId`（Integer）：書籍ID
-- `bookName`（String）：書籍名
-
-**コンストラクタ：**
-- デフォルトコンストラクタ
-- メッセージ付きコンストラクタ
-- メッセージと原因例外付きコンストラクタ
-- 原因例外付きコンストラクタ
-- **主要コンストラクタ**：`OutOfStockException(Integer bookId, String bookName, String message)`
-  - 書籍情報とエラーメッセージを受け取る
-  - 親クラスのコンストラクタにメッセージを渡す
-  - bookIdとbookNameフィールドに値を設定
-
-**getterメソッド：**
-- `getBookId()`：書籍IDを返す
-- `getBookName()`：書籍名を返す
+**要点：**
+- RuntimeExceptionを継承
+- フィールド：`bookId`（Integer）、`bookName`（String）
+- 主要コンストラクタ：`OutOfStockException(Integer bookId, String bookName, String message)`
+- getterメソッド：`getBookId()`、`getBookName()`
 
 ---
 
 ### 2. OrderServiceへの在庫チェックロジック追加
 
-#### 対象ファイル
-- `src/main/java/pro/kensait/berrybooks/service/order/OrderService.java`
+**対象:** `src/main/java/pro/kensait/berrybooks/service/order/OrderService.java`の`orderBooks()`メソッド
 
-#### 対象メソッド
-- `orderBooks(OrderTO orderTO)` メソッド
+詳細設計書「8.3.3 在庫チェックロジック詳細」の仕様に従って実装してください。
 
-#### 実装箇所
-- 134-153行目付近：カート内の書籍をループ処理する部分
-- 在庫減算処理（148-149行目）の**前**に在庫チェックを追加
+**実装箇所：** カート内の書籍をループ処理する部分で、在庫減算処理の**前**に追加
 
-#### 詳細実装手順
-
-**ステップ1: 在庫情報取得（既存コード：143行目）**
-- `stockDao.findById()`で現在の在庫情報を取得
-- 既存のコードをそのまま使用
-
-**ステップ2: 在庫チェックロジックの追加（143行目と148行目の間に挿入）**
-- 在庫数と注文数を比較
-- 条件式：`if (currentStock.getQuantity() < cartItem.getCount())`
-- 在庫不足の場合、`OutOfStockException`をスロー
-
-**スロー時のパラメータ：**
-- 第1引数：書籍ID（`cartItem.getBookId()`）
-- 第2引数：書籍名（`cartItem.getBookName()`）
-- 第3引数：エラーメッセージ（`"在庫不足: " + cartItem.getBookName()`）
-
-**例外クラス：**
-- パッケージ：`pro.kensait.berrybooks.service.order.OutOfStockException`
-- 上記で新規作成したクラスを使用（import文の追加が必要）
-
-**ログ出力：**
-- 在庫不足検出時にWARNレベルでログ出力
-- 形式：`logger.warn("在庫不足: bookId={}, bookName={}, 在庫数={}, 注文数={}", ...)`
-
-**ステップ3: 既存の在庫減算処理（148-153行目）**
-- 在庫チェックをパスした場合のみ実行される
-- 変更不要（そのまま維持）
+**実装内容：**
+- `stockDao.findById()`で取得した現在の在庫数と注文数を比較
+- 在庫不足の場合、`OutOfStockException`をスロー（書籍ID、書籍名、エラーメッセージを含める）
+- WARNレベルでログ出力（書籍ID、書籍名、在庫数、注文数を含める）
+- 在庫が充分な場合は既存の在庫減算処理を継続
 
 ---
 
 ### 3. OrderBeanでの例外ハンドリング追加
 
-#### 対象ファイル
-- `src/main/java/pro/kensait/berrybooks/web/order/OrderBean.java`
-
-#### 対象メソッド
-- 注文確定処理を行うメソッド（`placeOrder()`または類似メソッド）
-- `OrderService.orderBooks()`を呼び出している箇所
-
-#### 詳細実装手順
-
-**ステップ1: 既存のtry-catchブロックを確認**
-- `orderService.orderBooks(orderTO)`を呼び出している箇所を特定
-- 既存の例外ハンドリングを確認
-
-**ステップ2: OutOfStockExceptionのcatchブロックを追加**
-- 既存の例外ハンドリングの前に配置
-- より具体的な例外を先にcatchする
+**対象:** `src/main/java/pro/kensait/berrybooks/web/order/OrderBean.java`の注文確定処理メソッド
 
 **実装内容：**
+- `orderService.orderBooks()`呼び出し部分で`OutOfStockException`をcatch
 - WARNレベルでログ出力（書籍IDと書籍名を含める）
-- 例外からエラーメッセージを取得（`e.getMessage()`）
-- FacesContextのFlash Scopeにエラーメッセージを設定
+- Flash Scopeにエラーメッセージを設定
 - `orderError.xhtml`へリダイレクト（`faces-redirect=true`を指定）
-
-**import文の追加：**
-- `pro.kensait.berrybooks.service.order.OutOfStockException`
+- 既存の例外ハンドリングより前に配置（より具体的な例外を先にcatch）
 
 ---
 
 ### 4. エラーページの確認・作成
 
-#### エラーページ
-- `src/main/webapp/orderError.xhtml`
+**対象:** `src/main/webapp/orderError.xhtml`
 
-#### 確認事項
-- 既にorderError.xhtmlが存在するか確認
-- 存在する場合：Flash Scopeから`errorMessage`を取得して表示する部分があるか確認
-- 存在しない場合：新規作成が必要
-
-#### orderError.xhtmlの実装（存在しない場合）
-
-**基本構造：**
-- XML宣言とDOCTYPE宣言
-- JSF名前空間の宣言（`xmlns:h`、`xmlns:f`）
-- タイトル：「注文エラー - Berry Books」
-- CSSファイルのインクルード（`style.css`）
-
-**表示内容：**
-- 見出し：「注文処理でエラーが発生しました」
-- エラーメッセージ表示エリア：`#{flash.errorMessage}`でFlash Scopeから取得
-- カートに戻るボタン：`cartView?faces-redirect=true`へ遷移
-
-**CSSスタイリング（オプション）：**
-- エラーメッセージ表示エリアにスタイルを適用
-- 赤色、太字、適切な余白など
+**確認・作成内容：**
+- 既存ファイルの有無を確認
+- 存在しない場合は新規作成
+- `#{flash.errorMessage}`でエラーメッセージを表示
+- カートに戻るボタンを配置（`cartView?faces-redirect=true`へ遷移）
+- 既存のJSFページのスタイルに合わせて実装
 
 ---
 
 ### 5. トランザクションとロールバックの確認
 
-#### 確認項目
-- `OrderService.orderBooks()`メソッドに`@Transactional`が付与されているか（24行目で確認済み）
-- `OutOfStockException`がスローされた場合、トランザクションが自動的にロールバックされることを確認
-- ロールバック後、在庫減算や注文登録が行われていないことを確認
-
-#### トランザクション動作
-- `OutOfStockException`はRuntimeExceptionを継承しているため、デフォルトでロールバックされる
+**確認内容：**
+- `OrderService.orderBooks()`に`@Transactional`が付与されていることを確認
+- `OutOfStockException`はRuntimeExceptionを継承しているため、自動的にロールバックされる
 - 明示的なロールバック指定は不要
 
 ---
 
 ### 6. 楽観的ロックとの併用
 
-#### 実装上の注意点
-- 在庫チェックは、楽観的ロック処理の一部として動作
-- 在庫チェックをパスしても、楽観的ロックにより他ユーザーの更新を検出
-- 両方のチェックが必要：
-  1. 在庫数チェック（数量の妥当性）
-  2. 楽観的ロック（バージョン番号による競合検出）
-
-#### 処理順序
-1. カート追加時のVERSION値でStockエンティティを作成（139-140行目）
-2. 現在の在庫情報を取得（143行目）
-3. **在庫数チェック（新規追加）** ← ここで追加
-4. バージョン番号を設定（146行目）
-5. 在庫減算（148-149行目）
-6. 更新実行（153行目） ← この時点で楽観的ロックが作動
+**実装上の注意点：**
+- 在庫数チェック（数量の妥当性）と楽観的ロック（バージョン番号による競合検出）の両方が必要
+- 在庫チェックは在庫減算処理の前に実行
+- 既存の楽観的ロック処理は変更しない
 
 ---
 
-### 7. ログ出力
+### 7. テスト観点
 
-#### OrderServiceでのログ
-- 在庫不足検出時：WARNレベル
-- メッセージ：「在庫不足: bookId={}, bookName={}, 在庫数={}, 注文数={}」
-
-#### OrderBeanでのログ
-- OutOfStockException catch時：WARNレベル
-- メッセージ：「在庫不足エラー: bookId={}, bookName={}」
-
----
-
-### 8. テスト観点
-
-#### 動作確認項目
-1. **在庫充分な場合**
-   - 在庫チェックをパス
-   - 注文が正常に完了
-   - 在庫が減算される
-
-2. **在庫不足の場合**
-   - OutOfStockExceptionがスローされる
-   - エラーメッセージが表示される
-   - トランザクションがロールバックされる
-   - 在庫が減算されない
-   - 注文が登録されない
-
-3. **複数商品の一部が在庫不足の場合**
-   - 最初の在庫不足商品でエラー
-   - 以降の処理は実行されない
-   - すべてロールバック
-
-4. **楽観的ロックとの併用**
-   - 在庫チェックをパスしても、バージョン不一致でOptimisticLockException
-   - 両方の例外が適切にハンドリングされる
-
----
-
-## 参考情報
-
-### 詳細設計書
-- ファイル：`spec/詳細設計書/BerryBooks_詳細設計書.md`
-- セクション：「8.3.3 在庫チェックロジック詳細」（791-829行目）
-- セクション：「14.2.1 OutOfStockException」（1395-1412行目）
-
-### 例外クラス（新規作成）
-- クラス：`pro.kensait.berrybooks.service.order.OutOfStockException`
-- 継承元：RuntimeException
-- フィールド：`bookId`（Integer）、`bookName`（String）
-- 主要コンストラクタ：`OutOfStockException(Integer bookId, String bookName, String message)`
-- getterメソッド：`getBookId()`、`getBookName()`
-
-### エラーメッセージ仕様
-- メッセージキー：`error.out-of-stock`
-- 表示形式：「在庫不足: {書籍名}」
-- 例：「在庫不足: Java SEディープダイブ」
+**動作確認項目：**
+1. 在庫充分な場合：注文が正常に完了し、在庫が減算される
+2. 在庫不足の場合：OutOfStockExceptionがスローされ、エラー画面に遷移し、トランザクションがロールバックされる
+3. 複数商品の一部が在庫不足の場合：最初の在庫不足商品でエラーとなり、すべてロールバックされる
+4. 楽観的ロックとの併用：両方の例外が適切にハンドリングされる
 
 ---
 
 ## 実装順序の推奨
 
-1. OutOfStockException例外クラスの作成（最優先）
+1. OutOfStockException例外クラスの作成
 2. OrderServiceの在庫チェックロジック追加
 3. OrderBeanの例外ハンドリング追加
 4. orderError.xhtmlの確認・作成（必要に応じて）
@@ -246,6 +107,7 @@ berry-books-1プロジェクトに在庫チェック機能を追加してくだ�
 ## 注意事項
 
 - 既存のコードを最小限の変更で機能追加すること
+- 詳細設計書（`spec/詳細設計書/EXCEL詳細仕様書_解凍版`フォルダ）の仕様に厳密に従うこと
 - 在庫減算ロジックは変更しない（在庫チェックを追加するのみ）
 - 楽観的ロックの実装も維持すること
 - トランザクション境界を変更しないこと
