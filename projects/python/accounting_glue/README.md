@@ -28,7 +28,7 @@
 ### 1. プロジェクトディレクトリに移動
 
 ```bash
-cd projects/python/accounting_glue_fn
+cd projects/python/accounting_glue
 ```
 
 ### 2. 依存パッケージのインストール
@@ -225,7 +225,7 @@ src/
 ## ディレクトリ構成
 
 ```
-projects/python/accounting_glue_fn/
+projects/python/accounting_glue/
 ├── src/                       # プロダクションコード
 │   ├── common/               # 共通モジュール
 │   ├── etl/                  # ETL変換モジュール（環境非依存）

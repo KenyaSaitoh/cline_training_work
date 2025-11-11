@@ -9,7 +9,7 @@
 ### 1.1 全体モジュール構成
 
 ```
-projects/python/accounting_glue/
+projects/python/accounting_glue_fn/
 ├── src/
 │   ├── local/                         # ローカル実行用ETLジョブ
 │   │   ├── etl_orchestrator.py        # 統合オーケストレーター

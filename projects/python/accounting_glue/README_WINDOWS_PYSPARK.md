@@ -22,7 +22,7 @@
 ### 1. プロジェクトディレクトリに移動
 
 ```bash
-cd projects/python/accounting_glue_fn
+cd projects/python/accounting_glue
 ```
 
 ### 2. 開発・テスト環境のインストール
