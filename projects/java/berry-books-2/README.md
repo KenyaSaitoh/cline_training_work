@@ -237,7 +237,7 @@ projects/berry-books-2/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── dev/berry/
+│   │   │   └── pro/kensait/berrybooks/
 │   │   │       ├── view/           # JSF Managed Bean
 │   │   │       ├── service/        # ビジネスロジック
 │   │   │       ├── dao/            # データアクセス層
@@ -255,7 +255,7 @@ projects/berry-books-2/
 │   │           └── beans.xml
 │   └── test/
 │       └── java/
-│           └── dev/berry/service/   # サービス層のテスト
+│           └── pro/kensait/berrybooks/service/   # サービス層のテスト
 │               ├── order/           # 注文サービスのテスト
 │               ├── book/            # 書籍サービスのテスト
 │               ├── category/        # カテゴリサービスのテスト
@@ -298,7 +298,7 @@ projects/berry-books-2/
 ## 📦 パッケージ構成
 
 ```
-dev.berry/
+pro.kensait.berrybooks/
 ├── view/                # JSF Managed Bean
 │   ├── BookSearchBean.java
 │   ├── CartBean.java

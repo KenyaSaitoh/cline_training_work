@@ -232,7 +232,7 @@ projects/berry-books-fn/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── dev/berry/
+│   │   │   └── pro/kensait/berrybooks/
 │   │   │       ├── view/           # JSF Managed Bean
 │   │   │       ├── service/        # ビジネスロジック
 │   │   │       ├── dao/            # データアクセス層
@@ -250,7 +250,7 @@ projects/berry-books-fn/
 │   │           └── beans.xml
 │   └── test/
 │       └── java/
-│           └── dev/berry/service/   # サービス層のテスト
+│           └── pro/kensait/berrybooks/service/   # サービス層のテスト
 │               ├── order/           # 注文サービスのテスト
 │               ├── book/            # 書籍サービスのテスト
 │               ├── category/        # カテゴリサービスのテスト
