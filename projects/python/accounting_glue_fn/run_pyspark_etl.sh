@@ -93,18 +93,18 @@ run_etl_job() {
 JOB_LOWER=$(echo "$JOB" | tr '[:upper:]' '[:lower:]')
 case "$JOB_LOWER" in
     sales)
-        run_etl_job "Sales ETL" "src/local/pyspark/standalone_sales_etl_job.py"
+        run_etl_job "Sales ETL" "src/local/pyspark/pyspark_sales_etl_job.py"
         ;;
     hr)
-        run_etl_job "HR ETL" "src/local/pyspark/standalone_hr_etl_job.py" "--payroll-period" "2025-08"
+        run_etl_job "HR ETL" "src/local/pyspark/pyspark_hr_etl_job.py" "--payroll-period" "2025-08"
         ;;
     inventory)
-        run_etl_job "Inventory ETL" "src/local/pyspark/standalone_inventory_etl_job.py"
+        run_etl_job "Inventory ETL" "src/local/pyspark/pyspark_inventory_etl_job.py"
         ;;
     all)
-        run_etl_job "Sales ETL" "src/local/pyspark/standalone_sales_etl_job.py"
-        run_etl_job "HR ETL" "src/local/pyspark/standalone_hr_etl_job.py" "--payroll-period" "2025-08"
-        run_etl_job "Inventory ETL" "src/local/pyspark/standalone_inventory_etl_job.py"
+        run_etl_job "Sales ETL" "src/local/pyspark/pyspark_sales_etl_job.py"
+        run_etl_job "HR ETL" "src/local/pyspark/pyspark_hr_etl_job.py" "--payroll-period" "2025-08"
+        run_etl_job "Inventory ETL" "src/local/pyspark/pyspark_inventory_etl_job.py"
         
         # 個別ファイルを統合
         echo ""

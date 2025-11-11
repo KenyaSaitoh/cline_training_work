@@ -67,20 +67,23 @@ python cleanup_output.py --force
 
 ```bash
 # オーケストレーター経由で全ジョブを並列実行（推奨）
-python src/local/etl_orchestrator.py --max-workers 4 --cleanup
+python src/local/etl_orchestrator.py --mode python --limit 100
+
+# 全件処理の場合（limitなし）
+python src/local/etl_orchestrator.py --mode python
 ```
 
 #### 個別ジョブ実行
 
 ```bash
 # Sales ETL
-python src/local/python_native/standalone_sales_etl_job.py --max-workers 4
+python src/local/python_native/standalone_sales_etl_job.py --limit 100
 
 # HR ETL
-python src/local/python_native/standalone_hr_etl_job.py --max-workers 4
+python src/local/python_native/standalone_hr_etl_job.py --limit 100
 
 # Inventory ETL
-python src/local/python_native/standalone_inventory_etl_job.py --max-workers 4
+python src/local/python_native/standalone_inventory_etl_job.py --limit 100
 ```
 
 #### 出力ファイルの確認
@@ -98,8 +101,22 @@ tail -n +2 output/accounting_txn_interface.csv | wc -l
 
 ### PySpark版
 
-> **Windows + Python 3.11以外の環境でPySparkを使用する場合**: 
-> 埋め込み版Pythonなど、システムインストール版Python 3.11以外の環境を使用する場合は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照してください。システムインストール版Python 3.11を使用している場合は、以下の通常の手順で実行できます。
+#### 実行スクリプトの選択
+
+PySpark版には2つの実行スクリプトがあります：
+
+1. **`run_pyspark_etl.sh`** - 一般的な環境用
+   - システムにインストールされたPythonを使用
+   - Linux、macOS、Windows（システムPython）で使用
+
+2. **`run_pyspark_etl_win_embed.sh`** - Windows埋め込み版Python専用
+   - `python-3.11.7-embed-amd64` など埋め込み版Pythonを使用
+   - 環境変数 `PYTHON311_PATH` の設定が必須
+   - 詳細は [README_WINDOWS_PYSPARK.md](README_WINDOWS_PYSPARK.md) を参照
+
+> **どちらを使うべきか**:
+> - **一般的な環境（システムPython）**: `./run_pyspark_etl.sh` を使用
+> - **Windows埋め込み版Python 3.11**: `./run_pyspark_etl_win_embed.sh` を使用（環境変数設定必須）
 
 #### 出力フォルダのクリーンアップ（初回/終了時）
 
@@ -112,14 +129,14 @@ python cleanup_output.py --force
 > - プロジェクト開始時に1回実行（前回の出力をクリア）
 > - プロジェクト終了時に1回実行（クリーンアップ）
 
-#### 全ジョブ実行
+#### 全ジョブ実行（一般的な環境）
 
 ```bash
 # 全ETLジョブを並列実行
 ./run_pyspark_etl.sh all
 ```
 
-#### 個別ジョブ実行
+#### 個別ジョブ実行（一般的な環境）
 
 ```bash
 # Sales ETL

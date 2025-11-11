@@ -40,6 +40,8 @@ cd projects/python/accounting_glue_fn
 
 ## PySpark ETL実行方法
 
+PySpark版のETLジョブは、`src/local/pyspark/pyspark_*.py` という命名規則のファイルを使用します。
+
 ### 出力フォルダのクリーンアップ（初回/終了時）
 
 ```bash
@@ -79,6 +81,11 @@ export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
 # Inventory ETL
 ./run_pyspark_etl.sh inventory
 ```
+
+> **Note**: これらのスクリプトは内部で以下のPySparkジョブを実行します：
+> - `src/local/pyspark/pyspark_sales_etl_job.py`
+> - `src/local/pyspark/pyspark_hr_etl_job.py`
+> - `src/local/pyspark/pyspark_inventory_etl_job.py`
 
 ### 出力ファイルの確認
 

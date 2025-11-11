@@ -206,8 +206,8 @@ src/
 │   ├── csv_handler.py
 │   └── utils.py
 ├── local/                        # ローカル実行用
-│   ├── python_native/            → Python標準版（PySparkなし）
-│   ├── pyspark/                  → PySpark版
+│   ├── python_native/            → Python標準版（standalone_*.py）
+│   ├── pyspark/                  → PySpark版（pyspark_*.py）
 │   └── etl_orchestrator.py       → オーケストレーター
 └── aws_glue/                     # AWS Glue実行用（本番環境）
     ├── sales_etl_job.py

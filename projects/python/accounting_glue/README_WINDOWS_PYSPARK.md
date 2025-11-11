@@ -60,8 +60,8 @@ $PYTHON311_PATH cleanup_output.py --force
 # 環境変数を設定
 export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
 
-# 全ETLジョブを並列実行
-./run_pyspark_etl.sh all
+# 全ETLジョブを並列実行（埋め込み版Python専用スクリプト）
+./run_pyspark_etl_win_embed.sh all
 ```
 
 ### 個別ジョブ実行
@@ -71,13 +71,13 @@ export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
 export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
 
 # Sales ETL
-./run_pyspark_etl.sh sales
+./run_pyspark_etl_win_embed.sh sales
 
 # HR ETL
-./run_pyspark_etl.sh hr
+./run_pyspark_etl_win_embed.sh hr
 
 # Inventory ETL
-./run_pyspark_etl.sh inventory
+./run_pyspark_etl_win_embed.sh inventory
 ```
 
 ### 出力ファイルの確認

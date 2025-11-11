@@ -1,9 +1,10 @@
 #!/bin/bash
-# PySpark ETL実行スクリプト（一般的な環境用）
-# Usage: ./run_pyspark_etl.sh [sales|hr|inventory|all] [--limit N]
+# PySpark ETL実行スクリプト（Windows埋め込み版Python 3.11専用）
+# Usage: ./run_pyspark_etl_win_embed.sh [sales|hr|inventory|all] [--limit N]
 #
-# このスクリプトはシステムにインストールされたPythonを使用します。
-# Windows埋め込み版Python 3.11を使用する場合は run_pyspark_etl_win_embed.sh を使用してください。
+# 前提条件:
+#   - 環境変数 PYTHON311_PATH が設定されていること
+#   - 例: export PYTHON311_PATH="/d/Python/python-3.11.7-embed-amd64/python.exe"
 
 # カラー出力用
 CYAN='\033[0;36m'
@@ -29,7 +30,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo -e "${RED}Unknown parameter: $1${NC}"
-            echo "Usage: ./run_pyspark_etl.sh [sales|hr|inventory|all] [--limit N]"
+            echo "Usage: ./run_pyspark_etl_win_embed.sh [sales|hr|inventory|all] [--limit N]"
             exit 1
             ;;
     esac
@@ -39,27 +40,28 @@ done
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-# Python実行ファイルパスの決定
-# 環境変数 PYTHON311_PATH が設定されていればそれを使用、なければシステムPythonを使用
-if [ -n "$PYTHON311_PATH" ]; then
-    PYTHON311="$PYTHON311_PATH"
-else
-    # プラットフォーム検出
-    OS_TYPE=$(uname -s)
-    
-    if [[ "$OS_TYPE" == "MINGW"* ]] || [[ "$OS_TYPE" == "MSYS"* ]] || [[ "$OS_TYPE" == "CYGWIN"* ]]; then
-        # Windows (Git Bash): システムPythonを使用
-        PYTHON311="python"
-    elif [[ "$OS_TYPE" == "Darwin" ]]; then
-        # macOS: システムPython 3.11を使用
-        PYTHON311="python3.11"
-    else
-        # Linux: システムPython 3.11を使用
-        PYTHON311="python3.11"
-    fi
+# Python311_PATH環境変数のチェック（必須）
+if [ -z "$PYTHON311_PATH" ]; then
+    echo -e "${RED}ERROR: PYTHON311_PATH environment variable is not set!${NC}"
+    echo ""
+    echo -e "${YELLOW}Please set PYTHON311_PATH to your embedded Python installation:${NC}"
+    echo -e "${CYAN}  export PYTHON311_PATH=\"/d/Python/python-3.11.7-embed-amd64/python.exe\"${NC}"
+    echo ""
+    echo -e "${YELLOW}For more details, see:${NC} README_WINDOWS_PYSPARK.md"
+    exit 1
 fi
 
-# PySpark環境変数を設定
+# Pythonの存在確認
+if [ ! -f "$PYTHON311_PATH" ]; then
+    echo -e "${RED}ERROR: Python executable not found at:${NC} $PYTHON311_PATH"
+    echo ""
+    echo -e "${YELLOW}Please check your PYTHON311_PATH setting.${NC}"
+    exit 1
+fi
+
+PYTHON311="$PYTHON311_PATH"
+
+# PySpark環境変数を設定（埋め込み版Python使用）
 export PYSPARK_PYTHON="$PYTHON311"
 export PYSPARK_DRIVER_PYTHON="$PYTHON311"
 
@@ -68,7 +70,14 @@ export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
 
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}PySpark ETL Job Runner${NC}"
+echo -e "${CYAN}(Windows Embedded Python 3.11)${NC}"
 echo -e "${CYAN}========================================${NC}"
+echo -e "${YELLOW}Python: $PYTHON311${NC}"
+echo ""
+
+# Pythonバージョン確認
+PYTHON_VERSION=$("$PYTHON311" --version 2>&1)
+echo -e "${CYAN}Python Version: ${PYTHON_VERSION}${NC}"
 echo ""
 
 # ジョブ実行関数
@@ -115,7 +124,7 @@ case "$JOB_LOWER" in
         # 個別ファイルを統合
         echo ""
         echo -e "${GREEN}[$(date '+%H:%M:%S')] Merging output files...${NC}"
-        python merge_etl_outputs.py
+        "$PYTHON311" merge_etl_outputs.py
         
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}[$(date '+%H:%M:%S')] Merge completed successfully!${NC}"
@@ -134,4 +143,5 @@ esac
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}All jobs completed!${NC}"
 echo -e "${CYAN}========================================${NC}"
+
 

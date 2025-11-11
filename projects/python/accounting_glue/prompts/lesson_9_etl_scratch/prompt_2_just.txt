@@ -34,25 +34,48 @@ ETL実装プロンプト【中：適切版】
 ### 2.3 実行環境別のラッパー
 
 #### ①Python標準版（`src/local/python_native/`）
-ThreadPoolExecutorで並列処理（小規模データ向け）
+- ファイル名: `standalone_sales_etl_job.py`, `standalone_hr_etl_job.py`, `standalone_inventory_etl_job.py`
+- ThreadPoolExecutorで並列処理（小規模データ向け）
 
 #### ②PySpark版（`src/local/pyspark/`）
-RDD.map()で分散処理（大規模データ向け）
+- ファイル名: `pyspark_sales_etl_job.py`, `pyspark_hr_etl_job.py`, `pyspark_inventory_etl_job.py`
+- RDD.map()で分散処理（大規模データ向け）
+- **注意**: PYTHONPATH設定が必要（ワーカープロセスで`src`モジュールを認識させるため）
 
 #### ③AWS Glue版（`src/aws_glue/`）
-S3読み込み/書き込み（本番環境）
+- ファイル名: `glue_sales_etl_job.py`, `glue_hr_etl_job.py`, `glue_inventory_etl_job.py`
+- S3読み込み/書き込み（本番環境）
 
 ### 2.4 オーケストレーター（`src/local/etl_orchestrator.py`）
 
-3つのETLジョブを並列実行し、個別出力を統合して`accounting_txn_interface.csv`を生成。
+- 3つのETLジョブをThreadPoolExecutorで並列実行
+- 個別出力（`*_sales.csv`, `*_hr.csv`, `*_inv.csv`）を統合して`accounting_txn_interface.csv`を生成
+- Python標準版とPySpark版の両方をサポート
+
+**実行方法**:
+```bash
+# Python標準版
+python src/local/etl_orchestrator.py --mode python --limit 100
+
+# PySpark版
+python src/local/etl_orchestrator.py --mode pyspark --limit 1000
+
+# 全件処理
+python src/local/etl_orchestrator.py --mode python
+```
 
 ## 3. テスト
 
-### 単体テスト（`tests/unit/`）
-各Transformerの変換ロジックをテスト
+### 単体テスト（`tests/unit/test_etl/`）
+- `test_sales_transformer.py`: 売上変換ロジックのテスト（15+ test cases）
+- `test_hr_transformer.py`: 人事変換ロジックのテスト（15+ test cases）
+- `test_inventory_transformer.py`: 在庫変換ロジックのテスト（15+ test cases）
+- 実行: `pytest tests/unit/ -v`
 
 ### 統合テスト（`tests/integration/`）
-ETL出力と期待値データ（`test_data/expected/`）を照合
+- `test_etl_output.py`: ETL出力と期待値データ（`test_data/expected/`）を照合
+- `test_orchestrator.py`: オーケストレーターの並列実行とマージ処理をテスト（10+ test cases）
+- 実行: `pytest tests/integration/ -v`
 
 ## 4. 実装の優先順位
 
