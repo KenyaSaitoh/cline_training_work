@@ -73,18 +73,6 @@ DAO（新規）
 
 ---
 
-### 3. ログ出力の調整
-
-**現状の問題：**
-ServiceクラスでDAOのログも出力している（例：`logger.info("[ BookDao#findById ]")`）
-
-**リファクタリング内容：**
-- DAOクラスで独自のLoggerを定義
-- DAOメソッドでログを出力
-- ServiceクラスからDAOログ出力を削除
-
----
-
 ## 参考情報
 
 **アーキテクチャガイドライン：**
@@ -103,4 +91,3 @@ ServiceクラスでDAOのログも出力している（例：`logger.info("[ Boo
 3. CustomerDaoを作成
 4. OrderTranDaoとOrderDetailDaoを作成（最も複雑）
 5. 各ServiceクラスをリファクタリングしてDAO呼び出しに変更
-

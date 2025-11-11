@@ -20,12 +20,12 @@ Berry Books オンライン書店の管理者画面を、React + TypeScriptで�
 ### 顧客情報と統計情報の型
 顧客の基本情報（ID、名前、メール、生年月日、住所）と統計情報（注文件数、購入冊数合計）を含む型を定義してください。
 
-API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `CustomerStatsTO`
+API仕様参照: `spec/openapi.yaml` - `CustomerStatsTO`
 
 ### 顧客情報更新リクエストの型
 顧客情報更新時のリクエストボディ型（customerIdを除く4項目）を定義してください。
 
-API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `CustomerTO`
+API仕様参照: `spec/openapi.yaml` - `CustomerTO`
 
 ---
 
@@ -44,7 +44,7 @@ API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `CustomerTO`
 - HTTPエラーをresponse.okでチェック
 - エラー時はエラー状態にメッセージを設定
 
-API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `GET /customers/`
+API仕様参照: `spec/openapi.yaml` - `GET /customers/`
 
 ### 顧客情報更新API
 エンドポイント: `PUT /berry-books-rest/customers/{customerId}`
@@ -58,7 +58,7 @@ API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `GET /customers/
 - ネットワークエラーをtry-catchで捕捉
 - HTTPエラー時はアラートで通知
 
-API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `PUT /customers/{customerId}`
+API仕様参照: `spec/openapi.yaml` - `PUT /customers/{customerId}`
 
 ---
 
@@ -214,7 +214,7 @@ API仕様参照: `../java/berry-books-rest/spec/openapi.yaml` - `PUT /customers/
 
 ## 10. API仕様参照
 
-OpenAPI Specification: `../java/berry-books-rest/spec/openapi.yaml`
+OpenAPI Specification: `spec/openapi.yaml`
 
 主要参照箇所:
 - `/customers/` エンドポイント（GET）

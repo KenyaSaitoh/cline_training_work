@@ -14,7 +14,7 @@ Berry Books オンライン書店の管理者画面を、React + TypeScriptで�
 - 顧客情報の編集機能（ダイアログ形式）
 
 ## API連携
-REST API仕様は`../java/berry-books-rest/spec/openapi.yaml`を参照してください。
+REST API仕様は`spec/openapi.yaml`を参照してください。
 
 ## デザイン
 テーマカラー: #CF3F4E（Berry Booksのストロベリーレッド）

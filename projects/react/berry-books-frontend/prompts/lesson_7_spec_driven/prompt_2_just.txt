@@ -20,7 +20,7 @@ APIのデータ構造に対応する型を定義してください。
 - 顧客情報更新用のリクエスト型
 
 ### 2. REST API連携
-API仕様は`../java/berry-books-rest/spec/openapi.yaml`を参照してください。
+API仕様は`spec/openapi.yaml`を参照してください。
 
 - 顧客一覧を取得するAPI
 - 顧客情報を更新するAPI
@@ -55,16 +55,4 @@ API仕様は`../java/berry-books-rest/spec/openapi.yaml`を参照してくださ
 - テーブル: ストライプ、ホバー効果
 - ボタン: 編集（レッド系）、保存（グリーン系）、キャンセル（グレー系）
 - ダイアログ: オーバーレイ、中央配置、シャドウ効果
-
-### 6. Vite設定
-フロントエンドの開発サーバー（Vite）から、バックエンドAPI（Payara on http://localhost:8080）を呼び出せるように設定してください。
-具体的には、`/berry-books-rest`へのリクエストを`http://localhost:8080`に転送する設定が必要です。
-
----
-
-## 注意事項
-- TypeScript strictモード
-- Functional ComponentとHooks使用
-- Controlled componentでフォーム管理
-- エラーハンドリング（try-catch、HTTPステータスチェック）
 
