@@ -51,7 +51,6 @@ Jakarta EE 10とJAX-RS (Jakarta RESTful Web Services) 3.1を使用したオン�
 
 デプロイ後、以下のURLでAPIにアクセス：
 
-- **ベースURL**: http://localhost:8080/berry-books-rest/
 - **顧客取得**: http://localhost:8080/berry-books-rest/customers/1
 - **顧客の注文履歴取得**: http://localhost:8080/berry-books-rest/customers/1/orders
 - **顧客検索（メール）**: http://localhost:8080/berry-books-rest/customers/query_email?email=alice@gmail.com

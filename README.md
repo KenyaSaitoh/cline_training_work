@@ -104,12 +104,8 @@ chmod +x projects/python/accounting_glue/*.sh
 
 ```bash
 # プロジェクトのデータベーステーブルとデータを作成
-# 例：berry-books-1の場合
+# 例：berry-books-1、berry-books-2、berry-books-rest共通
 ./gradlew :projects:java:berry-books-1:setupHsqldb
-# 例：berry-books-2の場合
-./gradlew :projects:java:berry-books-2:setupHsqldb
-# 例：berry-books-restの場合
-./gradlew :projects:java:berry-books-rest:setupHsqldb
 
 # プロジェクトをビルド
 ./gradlew :projects:java:berry-books-1:war
@@ -159,7 +155,7 @@ chmod +x projects/python/accounting_glue/*.sh
 ```
 http://localhost:8080/berry-books-1
 http://localhost:8080/berry-books-2
-http://localhost:8080/berry-books-rest
+http://localhost:8080/berry-books-rest/customers/1
 ```
 
 ### ログイン情報
